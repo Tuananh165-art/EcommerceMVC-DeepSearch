@@ -91,7 +91,7 @@ namespace ECommerceMVC.Controllers
 				model.MaKh = kh.MaKh;
 				model.HoTen = kh.HoTen;
 				model.DiaChi = kh.DiaChi ?? string.Empty;
-				model.DienThoai = kh.DienThoai;
+				model.DienThoai = kh.DienThoai ?? string.Empty;
 				model.Email = kh.Email;
 			}
 

@@ -24,13 +24,31 @@ namespace ECommerceMVC.Controllers
 		}
 
 		[HttpPost]
-		public IActionResult DangKy(RegisterVM model, IFormFile Hinh)
+		[ValidateAntiForgeryToken]
+		public IActionResult DangKy(RegisterVM model, IFormFile? Hinh)
 		{
+			model.MaKh = (model.MaKh ?? string.Empty).Trim();
+			model.HoTen = (model.HoTen ?? string.Empty).Trim();
+			model.Email = (model.Email ?? string.Empty).Trim();
+			model.DiaChi = (model.DiaChi ?? string.Empty).Trim();
+			model.DienThoai = (model.DienThoai ?? string.Empty).Trim();
+
+			if (db.KhachHangs.Any(x => x.MaKh == model.MaKh))
+			{
+				ModelState.AddModelError(nameof(model.MaKh), "Tên đăng nhập đã tồn tại.");
+			}
+
+			if (db.KhachHangs.Any(x => x.Email == model.Email))
+			{
+				ModelState.AddModelError(nameof(model.Email), "Email đã được sử dụng.");
+			}
+
 			if (ModelState.IsValid)
 			{
 				try
 				{
 					var khachHang = _mapper.Map<KhachHang>(model);
+					khachHang.NgaySinh = model.NgaySinh ?? DateTime.Today;
 					khachHang.RandomKey = MyUtil.GenerateRamdomKey();
 					khachHang.MatKhau = model.MatKhau.ToMd5Hash(khachHang.RandomKey);
 					khachHang.HieuLuc = true;//sẽ xử lý khi dùng Mail để active
@@ -48,9 +66,9 @@ namespace ECommerceMVC.Controllers
 					TempData["SuccessMessage"] = "Đăng ký thành công.";
 					return RedirectToAction("Index", "HangHoa");
 				}
-				catch (Exception)
+				catch (Exception ex)
 				{
-					ModelState.AddModelError(string.Empty, "Không thể đăng ký tài khoản. Vui lòng thử lại.");
+					ModelState.AddModelError(string.Empty, $"Không thể đăng ký tài khoản. Vui lòng thử lại. ({ex.Message})");
 				}
 			}
 			return View(model);

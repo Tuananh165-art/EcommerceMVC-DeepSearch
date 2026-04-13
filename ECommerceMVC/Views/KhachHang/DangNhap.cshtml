@@ -9,7 +9,7 @@
             <div class="col-12 col-lg-6">
                 <div class="checkout_details_area mt-50 clearfix">
                     <div class="cart-title">
-                        <h2>Đăng nhập khách hàng</h2>
+                        <h2>Đăng nhập tài khoản khách hàng</h2>
                     </div>
 
                     <form asp-action="DangNhap" method="post">
@@ -18,7 +18,7 @@
 
                         <div class="mb-3">
                             <label asp-for="MaKh" class="mb-2"></label>
-                            <input asp-for="MaKh" class="form-control" placeholder="Nhập mã khách hàng" />
+                            <input asp-for="MaKh" class="form-control" placeholder="Ví dụ: khachhang01" />
                             <span asp-validation-for="MaKh" class="text-danger"></span>
                         </div>
 
@@ -28,7 +28,7 @@
                             <span asp-validation-for="MatKhau" class="text-danger"></span>
                         </div>
 
-                        <div class="form-check mb-3">
+                        <div class="form-check mb-4">
                             <input asp-for="GhiNho" class="form-check-input" />
                             <label asp-for="GhiNho" class="form-check-label"></label>
                         </div>

@@ -15,12 +15,15 @@ namespace ECommerceMVC.ViewModels
         public string HoTen { get; set; } = string.Empty;
 
         [Display(Name = "Số điện thoại")]
-        [MaxLength(24)]
-        public string? DienThoai { get; set; }
+        [Required(ErrorMessage = "Vui lòng nhập số điện thoại")]
+        [MaxLength(24, ErrorMessage = "Số điện thoại tối đa 24 ký tự")]
+        [RegularExpression(@"0[9875]\d{8}", ErrorMessage = "Số điện thoại chưa đúng định dạng di động Việt Nam")]
+        public string DienThoai { get; set; } = string.Empty;
 
         [Display(Name = "Email")]
+        [Required(ErrorMessage = "Vui lòng nhập email")]
         [EmailAddress(ErrorMessage = "Email không hợp lệ")]
-        public string? Email { get; set; }
+        public string Email { get; set; } = string.Empty;
 
         [Display(Name = "Địa chỉ nhận hàng")]
         [Required(ErrorMessage = "Vui lòng nhập địa chỉ nhận hàng")]
