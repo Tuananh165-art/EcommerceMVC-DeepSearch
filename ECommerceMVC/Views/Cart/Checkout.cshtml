@@ -1,0 +1,80 @@
+@model ECommerceMVC.ViewModels.CheckoutVM
+@using ECommerceMVC.ViewModels
+@{
+    ViewData["Title"] = "Checkout COD";
+    var cart = ViewBag.Cart as List<CartItem> ?? new List<CartItem>();
+    var subtotal = cart.Sum(x => x.ThanhTien);
+    var total = subtotal + Model.PhiVanChuyen;
+}
+
+<div class="cart-table-area section-padding-100">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-12 col-lg-8">
+                <div class="checkout_details_area mt-50 clearfix">
+                    <div class="cart-title">
+                        <h2>Checkout - Cash On Delivery</h2>
+                    </div>
+
+                    <form asp-action="Checkout" method="post">
+                        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <input asp-for="MaKh" class="form-control" placeholder="Mã khách hàng" />
+                                <span asp-validation-for="MaKh" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <input asp-for="HoTen" class="form-control" placeholder="Họ tên người nhận" />
+                                <span asp-validation-for="HoTen" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <input asp-for="DienThoai" class="form-control" placeholder="Số điện thoại" />
+                                <span asp-validation-for="DienThoai" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <input asp-for="Email" class="form-control" placeholder="Email" />
+                                <span asp-validation-for="Email" class="text-danger"></span>
+                            </div>
+                            <div class="col-12 mb-3">
+                                <input asp-for="DiaChi" class="form-control" placeholder="Địa chỉ nhận hàng" />
+                                <span asp-validation-for="DiaChi" class="text-danger"></span>
+                            </div>
+                            <div class="col-12 mb-3">
+                                <textarea asp-for="GhiChu" class="form-control w-100" cols="30" rows="5" placeholder="Ghi chú đơn hàng"></textarea>
+                            </div>
+
+                            <div class="col-12">
+                                <div class="payment-method mb-4">
+                                    <div class="custom-control custom-checkbox mr-sm-2">
+                                        <input type="checkbox" class="custom-control-input" id="cod" checked disabled>
+                                        <label class="custom-control-label" for="cod">Cash on Delivery (COD)</label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-12">
+                                <button type="submit" class="btn amado-btn w-100">Đặt hàng COD</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="col-12 col-lg-4">
+                <div class="cart-summary">
+                    <h5>Cart Total</h5>
+                    <ul class="summary-table">
+                        <li><span>subtotal:</span> <span>$@subtotal</span></li>
+                        <li><span>delivery:</span> <span>$@Model.PhiVanChuyen</span></li>
+                        <li><span>total:</span> <span>$@total</span></li>
+                    </ul>
+                    <p class="mb-0">Số sản phẩm: @cart.Sum(x => x.SoLuong)</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

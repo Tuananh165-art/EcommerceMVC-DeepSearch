@@ -1,0 +1,18 @@
+@{
+    ViewData["Title"] = "Đặt hàng thành công";
+}
+
+<div class="cart-table-area section-padding-100">
+    <div class="container-fluid">
+        <div class="row justify-content-center">
+            <div class="col-12 col-lg-8">
+                <div class="cart-summary text-center" style="max-width: 700px; margin: 0 auto;">
+                    <h2>Đặt hàng COD thành công</h2>
+                    <p>Mã đơn hàng của bạn: <strong>#@ViewBag.OrderId</strong></p>
+                    <p>Đơn hàng đã được ghi nhận. Nhân viên sẽ liên hệ xác nhận sớm.</p>
+                    <a asp-controller="HangHoa" asp-action="Index" class="btn amado-btn mt-3">Tiếp tục mua sắm</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

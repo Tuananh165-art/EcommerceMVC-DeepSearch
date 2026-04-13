@@ -43,6 +43,8 @@ namespace ECommerceMVC.Controllers
 
 					db.Add(khachHang);
 					db.SaveChanges();
+
+					HttpContext.Session.Set(MySetting.CUSTOMER_KEY, khachHang.MaKh);
 					return RedirectToAction("Index", "HangHoa");
 				}
 				catch (Exception ex)
