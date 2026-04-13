@@ -1,0 +1,75 @@
+@model ECommerceMVC.ViewModels.ChiTietDonHangVM
+@{
+    ViewData["Title"] = "Chi tiết đơn hàng";
+}
+
+<div class="cart-table-area section-padding-100">
+    <div class="container-fluid">
+        <div class="cart-title mt-50 d-flex justify-content-between align-items-center">
+            <h2>Đơn hàng #@Model.MaHd</h2>
+            <a asp-action="LichSuDonHang" class="btn amado-btn">Quay lại lịch sử đơn</a>
+        </div>
+
+        <div class="row mb-4">
+            <div class="col-lg-6">
+                <div class="cart-summary">
+                    <h5>Thông tin giao hàng</h5>
+                    <p><strong>Người nhận:</strong> @Model.HoTen</p>
+                    <p><strong>Địa chỉ:</strong> @Model.DiaChi</p>
+                    <p><strong>Ngày đặt:</strong> @Model.NgayDat.ToString("dd/MM/yyyy HH:mm")</p>
+                    <p><strong>Trạng thái:</strong> @Model.TrangThai</p>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="cart-summary">
+                    <h5>Thanh toán</h5>
+                    <p><strong>Phương thức:</strong> @Model.CachThanhToan</p>
+                    <p><strong>Vận chuyển:</strong> @Model.CachVanChuyen</p>
+                    <p><strong>Phí vận chuyển:</strong> $@Model.PhiVanChuyen</p>
+                    <p><strong>Ghi chú:</strong> @(string.IsNullOrWhiteSpace(Model.GhiChu) ? "-" : Model.GhiChu)</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="cart-table clearfix">
+            <table class="table table-responsive">
+                <thead>
+                    <tr>
+                        <th>Mã hàng</th>
+                        <th>Tên hàng</th>
+                        <th>Đơn giá</th>
+                        <th>Số lượng</th>
+                        <th>Giảm giá</th>
+                        <th>Thành tiền</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model.Items)
+                    {
+                        <tr>
+                            <td>@item.MaHh</td>
+                            <td>@item.TenHh</td>
+                            <td>$@item.DonGia</td>
+                            <td>@item.SoLuong</td>
+                            <td>$@item.GiamGia</td>
+                            <td>$@item.ThanhTien</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <div class="row justify-content-end">
+            <div class="col-lg-4">
+                <div class="cart-summary">
+                    <h5>Tổng kết</h5>
+                    <ul class="summary-table">
+                        <li><span>subtotal:</span> <span>$@Model.Subtotal</span></li>
+                        <li><span>delivery:</span> <span>$@Model.PhiVanChuyen</span></li>
+                        <li><span>total:</span> <span>$@Model.Total</span></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

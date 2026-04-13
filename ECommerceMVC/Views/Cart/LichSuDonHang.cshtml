@@ -1,0 +1,53 @@
+@model IEnumerable<ECommerceMVC.ViewModels.LichSuDonHangItemVM>
+@{
+    ViewData["Title"] = "Lịch sử đơn hàng COD";
+}
+
+<div class="cart-table-area section-padding-100">
+    <div class="container-fluid">
+        <div class="cart-title mt-50">
+            <h2>Lịch sử đơn hàng COD</h2>
+        </div>
+
+        <div class="cart-table clearfix">
+            <table class="table table-responsive">
+                <thead>
+                    <tr>
+                        <th>Mã đơn</th>
+                        <th>Ngày đặt</th>
+                        <th>Trạng thái</th>
+                        <th>Thanh toán</th>
+                        <th>Số lượng</th>
+                        <th>Tổng tiền</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.Any())
+                    {
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td>#@item.MaHd</td>
+                                <td>@item.NgayDat.ToString("dd/MM/yyyy HH:mm")</td>
+                                <td>@item.TrangThai</td>
+                                <td>@item.CachThanhToan</td>
+                                <td>@item.TongSoLuong</td>
+                                <td>$@item.TongTien</td>
+                                <td>
+                                    <a asp-action="ChiTietDonHang" asp-route-id="@item.MaHd" class="btn btn-sm amado-btn">Chi tiết</a>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="7">Chưa có đơn COD nào.</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

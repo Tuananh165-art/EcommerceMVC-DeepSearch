@@ -1,7 +1,8 @@
 using ECommerceMVC.Data;
+using ECommerceMVC.Helpers;
 using ECommerceMVC.ViewModels;
 using Microsoft.AspNetCore.Mvc;
-using ECommerceMVC.Helpers;
+using Microsoft.EntityFrameworkCore;
 
 namespace ECommerceMVC.Controllers
 {
@@ -15,6 +16,8 @@ namespace ECommerceMVC.Controllers
 		}
 
 		public List<CartItem> Cart => HttpContext.Session.Get<List<CartItem>>(MySetting.CART_KEY) ?? new List<CartItem>();
+
+		private string? CurrentCustomerId => HttpContext.Session.Get<string>(MySetting.CUSTOMER_KEY);
 
 		public IActionResult Index()
 		{
@@ -50,7 +53,7 @@ namespace ECommerceMVC.Controllers
 
 			HttpContext.Session.Set(MySetting.CART_KEY, gioHang);
 
-			return RedirectToAction("Index");
+			return RedirectToAction(nameof(Index));
 		}
 
 		public IActionResult RemoveCart(int id)
@@ -62,12 +65,17 @@ namespace ECommerceMVC.Controllers
 				gioHang.Remove(item);
 				HttpContext.Session.Set(MySetting.CART_KEY, gioHang);
 			}
-			return RedirectToAction("Index");
+			return RedirectToAction(nameof(Index));
 		}
 
 		[HttpGet]
 		public IActionResult Checkout()
 		{
+			if (string.IsNullOrWhiteSpace(CurrentCustomerId))
+			{
+				return RedirectToAction("DangNhap", "KhachHang", new { returnUrl = Url.Action(nameof(Checkout), "Cart") });
+			}
+
 			var gioHang = Cart;
 			if (!gioHang.Any())
 			{
@@ -77,18 +85,14 @@ namespace ECommerceMVC.Controllers
 
 			ViewBag.Cart = gioHang;
 			var model = new CheckoutVM();
-			var maKh = HttpContext.Session.Get<string>(MySetting.CUSTOMER_KEY);
-			if (!string.IsNullOrWhiteSpace(maKh))
+			var kh = db.KhachHangs.SingleOrDefault(x => x.MaKh == CurrentCustomerId);
+			if (kh != null)
 			{
-				var kh = db.KhachHangs.SingleOrDefault(x => x.MaKh == maKh);
-				if (kh != null)
-				{
-					model.MaKh = kh.MaKh;
-					model.HoTen = kh.HoTen;
-					model.DiaChi = kh.DiaChi ?? string.Empty;
-					model.DienThoai = kh.DienThoai;
-					model.Email = kh.Email;
-				}
+				model.MaKh = kh.MaKh;
+				model.HoTen = kh.HoTen;
+				model.DiaChi = kh.DiaChi ?? string.Empty;
+				model.DienThoai = kh.DienThoai;
+				model.Email = kh.Email;
 			}
 
 			return View(model);
@@ -98,6 +102,11 @@ namespace ECommerceMVC.Controllers
 		[ValidateAntiForgeryToken]
 		public IActionResult Checkout(CheckoutVM model)
 		{
+			if (string.IsNullOrWhiteSpace(CurrentCustomerId))
+			{
+				return RedirectToAction("DangNhap", "KhachHang", new { returnUrl = Url.Action(nameof(Checkout), "Cart") });
+			}
+
 			var gioHang = Cart;
 			if (!gioHang.Any())
 			{
@@ -105,10 +114,15 @@ namespace ECommerceMVC.Controllers
 				return RedirectToAction(nameof(Index));
 			}
 
-			var kh = db.KhachHangs.SingleOrDefault(x => x.MaKh == model.MaKh);
+			if (!string.Equals(CurrentCustomerId, model.MaKh, StringComparison.OrdinalIgnoreCase))
+			{
+				ModelState.AddModelError(nameof(model.MaKh), "Mã khách hàng không hợp lệ với tài khoản đang đăng nhập.");
+			}
+
+			var kh = db.KhachHangs.SingleOrDefault(x => x.MaKh == CurrentCustomerId);
 			if (kh == null)
 			{
-				ModelState.AddModelError(nameof(model.MaKh), "Mã khách hàng không tồn tại.");
+				ModelState.AddModelError(nameof(model.MaKh), "Khách hàng không tồn tại.");
 			}
 
 			if (!ModelState.IsValid)
@@ -117,10 +131,7 @@ namespace ECommerceMVC.Controllers
 				return View(model);
 			}
 
-			var trangThaiMoi = db.TrangThais
-				.OrderBy(x => x.MaTrangThai)
-				.FirstOrDefault();
-
+			var trangThaiMoi = db.TrangThais.OrderBy(x => x.MaTrangThai).FirstOrDefault();
 			if (trangThaiMoi == null)
 			{
 				ModelState.AddModelError(string.Empty, "Chưa cấu hình trạng thái đơn hàng trong hệ thống.");
@@ -133,7 +144,7 @@ namespace ECommerceMVC.Controllers
 			{
 				var hoaDon = new HoaDon
 				{
-					MaKh = model.MaKh,
+					MaKh = CurrentCustomerId!,
 					NgayDat = DateTime.Now,
 					NgayCan = DateTime.Now.AddDays(3),
 					HoTen = model.HoTen,
@@ -177,8 +188,87 @@ namespace ECommerceMVC.Controllers
 		[HttpGet]
 		public IActionResult CheckoutSuccess(int id)
 		{
+			if (string.IsNullOrWhiteSpace(CurrentCustomerId))
+			{
+				return RedirectToAction("DangNhap", "KhachHang");
+			}
+
+			var ownOrder = db.HoaDons.Any(x => x.MaHd == id && x.MaKh == CurrentCustomerId);
+			if (!ownOrder)
+			{
+				return RedirectToAction(nameof(LichSuDonHang));
+			}
+
 			ViewBag.OrderId = id;
 			return View();
+		}
+
+		[HttpGet]
+		public IActionResult LichSuDonHang()
+		{
+			if (string.IsNullOrWhiteSpace(CurrentCustomerId))
+			{
+				return RedirectToAction("DangNhap", "KhachHang", new { returnUrl = Url.Action(nameof(LichSuDonHang), "Cart") });
+			}
+
+			var items = db.HoaDons
+				.Where(x => x.MaKh == CurrentCustomerId && x.CachThanhToan == "COD")
+				.OrderByDescending(x => x.NgayDat)
+				.Select(x => new LichSuDonHangItemVM
+				{
+					MaHd = x.MaHd,
+					NgayDat = x.NgayDat,
+					TrangThai = x.MaTrangThaiNavigation.TenTrangThai,
+					CachThanhToan = x.CachThanhToan,
+					TongSoLuong = x.ChiTietHds.Sum(c => c.SoLuong),
+					TongTien = x.ChiTietHds.Sum(c => c.SoLuong * (c.DonGia - c.GiamGia)) + x.PhiVanChuyen
+				})
+				.ToList();
+
+			return View(items);
+		}
+
+		[HttpGet]
+		public IActionResult ChiTietDonHang(int id)
+		{
+			if (string.IsNullOrWhiteSpace(CurrentCustomerId))
+			{
+				return RedirectToAction("DangNhap", "KhachHang", new { returnUrl = Url.Action(nameof(ChiTietDonHang), "Cart", new { id }) });
+			}
+
+			var data = db.HoaDons
+				.Include(x => x.MaTrangThaiNavigation)
+				.Include(x => x.ChiTietHds)
+					.ThenInclude(c => c.MaHhNavigation)
+				.SingleOrDefault(x => x.MaHd == id && x.MaKh == CurrentCustomerId && x.CachThanhToan == "COD");
+
+			if (data == null)
+			{
+				return RedirectToAction(nameof(LichSuDonHang));
+			}
+
+			var model = new ChiTietDonHangVM
+			{
+				MaHd = data.MaHd,
+				NgayDat = data.NgayDat,
+				HoTen = data.HoTen ?? string.Empty,
+				DiaChi = data.DiaChi,
+				TrangThai = data.MaTrangThaiNavigation.TenTrangThai,
+				CachThanhToan = data.CachThanhToan,
+				CachVanChuyen = data.CachVanChuyen,
+				PhiVanChuyen = data.PhiVanChuyen,
+				GhiChu = data.GhiChu,
+				Items = data.ChiTietHds.Select(c => new ChiTietDonHangLineVM
+				{
+					MaHh = c.MaHh,
+					TenHh = c.MaHhNavigation.TenHh,
+					SoLuong = c.SoLuong,
+					DonGia = c.DonGia,
+					GiamGia = c.GiamGia
+				}).ToList()
+			};
+
+			return View(model);
 		}
 	}
 }

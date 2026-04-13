@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+using AutoMapper;
 using ECommerceMVC.Data;
 using ECommerceMVC.Helpers;
 using ECommerceMVC.ViewModels;
@@ -45,14 +45,69 @@ namespace ECommerceMVC.Controllers
 					db.SaveChanges();
 
 					HttpContext.Session.Set(MySetting.CUSTOMER_KEY, khachHang.MaKh);
+					TempData["SuccessMessage"] = "Đăng ký thành công.";
 					return RedirectToAction("Index", "HangHoa");
 				}
-				catch (Exception ex)
+				catch (Exception)
 				{
-					var mess = $"{ex.Message} shh";
+					ModelState.AddModelError(string.Empty, "Không thể đăng ký tài khoản. Vui lòng thử lại.");
 				}
 			}
-			return View();
+			return View(model);
+		}
+
+		[HttpGet]
+		public IActionResult DangNhap(string? returnUrl = null)
+		{
+			if (!string.IsNullOrWhiteSpace(HttpContext.Session.Get<string>(MySetting.CUSTOMER_KEY)))
+			{
+				return RedirectToAction("Index", "HangHoa");
+			}
+
+			return View(new DangNhapVM { ReturnUrl = returnUrl });
+		}
+
+		[HttpPost]
+		[ValidateAntiForgeryToken]
+		public IActionResult DangNhap(DangNhapVM model)
+		{
+			if (!ModelState.IsValid)
+			{
+				return View(model);
+			}
+
+			var khachHang = db.KhachHangs.SingleOrDefault(x => x.MaKh == model.MaKh);
+			if (khachHang == null || !khachHang.HieuLuc)
+			{
+				ModelState.AddModelError(string.Empty, "Tên đăng nhập hoặc mật khẩu không đúng.");
+				return View(model);
+			}
+
+			var hash = model.MatKhau.ToMd5Hash(khachHang.RandomKey);
+			if (!string.Equals(hash, khachHang.MatKhau, StringComparison.OrdinalIgnoreCase))
+			{
+				ModelState.AddModelError(string.Empty, "Tên đăng nhập hoặc mật khẩu không đúng.");
+				return View(model);
+			}
+
+			HttpContext.Session.Set(MySetting.CUSTOMER_KEY, khachHang.MaKh);
+			TempData["SuccessMessage"] = "Đăng nhập thành công.";
+
+			if (!string.IsNullOrWhiteSpace(model.ReturnUrl) && Url.IsLocalUrl(model.ReturnUrl))
+			{
+				return Redirect(model.ReturnUrl);
+			}
+
+			return RedirectToAction("Index", "HangHoa");
+		}
+
+		[HttpPost]
+		[ValidateAntiForgeryToken]
+		public IActionResult DangXuat()
+		{
+			HttpContext.Session.Remove(MySetting.CUSTOMER_KEY);
+			TempData["SuccessMessage"] = "Đã đăng xuất.";
+			return RedirectToAction("Index", "HangHoa");
 		}
 	}
 }
