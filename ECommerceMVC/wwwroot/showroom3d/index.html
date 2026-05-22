@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Showroom 3D n?i th?t | DEEPSEARCH</title>
+  <style>
+    * { margin: 0; padding: 0; outline: none !important; box-sizing: border-box; }
+    html, body, #root { width: 100%; height: 100%; overflow: hidden; background: #000; }
+    canvas { display: block; outline: none !important; }
+    #canvas { position: absolute; top: 0; left: 0; }
+  </style>
+  <script type="module" crossorigin src="/showroom3d/assets/index-CzaLCUMs.js"></script>
+</head>
+<body>
+  <div id="root"></div>
+  <a id="showroomBackLink" href="/Showroom" style="position:fixed;left:18px;top:18px;z-index:10;padding:10px 14px;border-radius:999px;background:rgba(0,0,0,.55);color:#fff;text-decoration:none;font:600 14px Inter,Arial,sans-serif;backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.18)">Back</a>
+  <script>
+    (function applyLuxuryDefaults() {
+      var isEmbedMode = false;
+      try {
+        isEmbedMode = new URLSearchParams(window.location.search).get("embed") === "1";
+      } catch (_) { }
+
+      if (isEmbedMode) {
+        var backLink = document.getElementById("showroomBackLink");
+        if (backLink) {
+          backLink.style.display = "none";
+        }
+      }
+
+      var attempts = 0;
+      var timer = setInterval(function() {
+        attempts += 1;
+        if (typeof window.setSofaColor === "function") {
+          window.setSofaColor("cream");
+          if (typeof window.setSpace === "function") {
+            window.setSpace("villa");
+          }
+          if (isEmbedMode) {
+            var dock = document.getElementById("customizer-dock");
+            if (dock) {
+              dock.style.display = "none";
+            }
+          }
+          clearInterval(timer);
+          return;
+        }
+
+        if (attempts > 80) {
+          clearInterval(timer);
+        }
+      }, 120);
+    })();
+  </script>
+</body>
+</html>

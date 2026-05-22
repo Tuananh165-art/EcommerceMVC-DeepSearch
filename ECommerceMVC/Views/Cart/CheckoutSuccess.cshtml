@@ -1,16 +1,89 @@
+﻿@model ECommerceMVC.ViewModels.CheckoutSuccessVM
 @{
-    ViewData["Title"] = "Đặt hàng thành công";
+    ViewData["Title"] = "Đặt hàng thành công | DEEPSEARCH";
 }
 
-<div class="cart-table-area section-padding-100">
-    <div class="container-fluid">
-        <div class="row justify-content-center">
-            <div class="col-12 col-lg-8">
-                <div class="cart-summary text-center" style="max-width: 700px; margin: 0 auto;">
-                    <h2>Đặt hàng COD thành công</h2>
-                    <p>Mã đơn hàng của bạn: <strong>#@ViewBag.OrderId</strong></p>
-                    <p>Đơn hàng đã được ghi nhận. Nhân viên sẽ liên hệ xác nhận sớm.</p>
-                    <a asp-controller="HangHoa" asp-action="Index" class="btn amado-btn mt-3">Tiếp tục mua sắm</a>
+<style>
+    .success-luxury {
+        background: linear-gradient(180deg, #f9f5ee 0%, #f2e9db 55%, #f8f2e8 100%);
+    }
+    .success-luxury .success-card {
+        background: rgba(255, 252, 247, 0.92);
+        border: 1px solid rgba(117, 82, 53, 0.14);
+        border-radius: 24px;
+        box-shadow: 0 18px 50px rgba(80, 54, 31, 0.10);
+    }
+</style>
+
+<div class="success-luxury py-5">
+    <div class="container py-4">
+        <div class="checkout-progress-bar mb-5 reveal">
+            <div class="d-flex justify-content-between align-items-center position-relative mx-auto" style="max-width: 600px;">
+                <div class="position-absolute w-100" style="height: 2px; top: 50%; transform: translateY(-50%); z-index: 1; background: #d8c9b8;">
+                    <div style="width:100%;height:100%;background:linear-gradient(90deg,#8c5d3b,#d1ad83);"></div>
+                </div>
+                <div class="d-flex flex-column align-items-center position-relative" style="z-index:2;">
+                    <div class="d-flex align-items-center justify-content-center text-white" style="width:36px;height:36px;border-radius:50%;background:linear-gradient(120deg,#8c5d3b,#d1ad83);"><i data-icon="check" data-size="16px"></i></div>
+                    <span class="text-xs mt-2">Giỏ hàng</span>
+                </div>
+                <div class="d-flex flex-column align-items-center position-relative" style="z-index:2;">
+                    <div class="d-flex align-items-center justify-content-center text-white" style="width:36px;height:36px;border-radius:50%;background:linear-gradient(120deg,#8c5d3b,#d1ad83);"><i data-icon="check" data-size="16px"></i></div>
+                    <span class="text-xs mt-2">Thanh toán</span>
+                </div>
+                <div class="d-flex flex-column align-items-center position-relative" style="z-index:2;">
+                    <div class="d-flex align-items-center justify-content-center text-white" style="width:36px;height:36px;border-radius:50%;border:2px solid #b68358;background:linear-gradient(120deg,#8c5d3b,#d1ad83);"><i data-icon="check" data-size="16px"></i></div>
+                    <span class="text-xs mt-2 fw-bold">Hoàn tất</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4 justify-content-center">
+            <div class="col-12 col-lg-7 reveal-left">
+                <div class="success-card p-5 text-center position-relative overflow-hidden">
+                    <i data-icon="check-circle" data-size="64px" class="mb-4 d-inline-block" style="color:#228b5a;"></i>
+                    <h2 class="font-heading fw-bold mb-3" style="font-size:2.35rem;">Đặt hàng thành công!</h2>
+                    <p class="mb-4" style="color:#6f5e4f;line-height:1.8;">Cảm ơn bạn đã lựa chọn DEEPSEARCH. Đơn hàng của bạn đã được ghi nhận và đang được bộ phận vận hành chuẩn bị chu đáo.</p>
+
+                    <div class="row g-3 justify-content-center mb-2">
+                        <div class="col-6 col-sm-4 text-center">
+                            <span class="d-block mb-1" style="font-size:.8rem;color:#8a7560;">Mã đơn hàng</span>
+                            <strong style="font-size:1.1rem;">#@Model.OrderId</strong>
+                        </div>
+                        <div class="col-6 col-sm-4 text-center">
+                            <span class="d-block mb-1" style="font-size:.8rem;color:#8a7560;">Số lượng hàng</span>
+                            <strong style="font-size:1.1rem;">@Model.TotalQuantityPaid sản phẩm</strong>
+                        </div>
+                        <div class="col-12 col-sm-4 text-center">
+                            <span class="d-block mb-1" style="font-size:.8rem;color:#8a7560;">Thanh toán</span>
+                            <strong style="font-size:1.1rem;">@Model.PaymentStatus</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 col-lg-5 reveal-right">
+                <div class="success-card p-4 h-100 d-flex flex-column justify-content-between">
+                    <div>
+                        <h4 class="font-heading text-xl mb-4 border-bottom pb-3" style="border-color:#e4d7c8 !important;">
+                            <i data-icon="package" data-size="20px" class="me-2" style="color:#9a6943;"></i> Tóm tắt thanh toán
+                        </h4>
+
+                        <div class="d-flex flex-column gap-3 mb-4">
+                            <div class="d-flex justify-content-between text-sm"><span style="color:#786857;">Tạm tính</span><strong>@($"{Model.SubtotalPaid:N0} VND")</strong></div>
+                            <div class="d-flex justify-content-between text-sm"><span style="color:#786857;">Phương thức</span><strong>@Model.PaymentMethod</strong></div>
+                            <div class="d-flex justify-content-between text-sm"><span style="color:#786857;">Phí vận chuyển</span><strong>@($"{Model.ShippingFee:N0} VND")</strong></div>
+                            <div class="d-flex justify-content-between pt-3 border-top" style="border-color:#e4d7c8 !important;"><span class="fw-bold">Tổng số tiền thanh toán</span><strong style="font-size:1.2rem;color:#9a6943;">@($"{Model.TotalPaid:N0} VND")</strong></div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex flex-column gap-2 mt-4">
+                        <a asp-controller="HangHoa" asp-action="Index" class="btn btn-gradient w-100 py-3 d-flex align-items-center justify-content-center gap-2" style="border-radius:14px;">
+                            <i data-icon="shopping-bag" data-size="18px"></i> Tiếp tục mua sắm
+                        </a>
+                        <a asp-controller="Cart" asp-action="LichSuDonHang" class="btn btn-outline-modern w-100 py-3 d-flex align-items-center justify-content-center gap-2" style="border-radius:14px;">
+                            <i data-icon="clock" data-size="18px"></i> Xem lịch sử đơn hàng
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>

@@ -1,5 +1,6 @@
 using ECommerceMVC.Data;
 using ECommerceMVC.Helpers;
+using ECommerceMVC.Services;
 using ECommerceMVC.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -8,24 +9,50 @@ namespace ECommerceMVC.Controllers
 {
 	public class CartController : Controller
 	{
+		private const string PendingVnPayOrderSessionKey = "PENDING_VNPAY_ORDER";
+		private const string AppliedVoucherSessionKey = "APPLIED_VOUCHER_CODE";
 		private readonly Hshop2023Context db;
+		private readonly IEmailService emailService;
+		private readonly IPaymentSandboxService paymentSandboxService;
+		private readonly IVnPayService vnPayService;
+		private readonly IVoucherService voucherService;
+		private readonly IShippingFeeService shippingFeeService;
+		private readonly IStockService stockService;
 
-		public CartController(Hshop2023Context context)
+		public CartController(
+			Hshop2023Context context,
+			IEmailService emailService,
+			IPaymentSandboxService paymentSandboxService,
+			IVnPayService vnPayService,
+			IVoucherService voucherService,
+			IShippingFeeService shippingFeeService,
+			IStockService stockService)
 		{
 			db = context;
+			this.emailService = emailService;
+			this.paymentSandboxService = paymentSandboxService;
+			this.vnPayService = vnPayService;
+			this.voucherService = voucherService;
+			this.shippingFeeService = shippingFeeService;
+			this.stockService = stockService;
 		}
 
-		public List<CartItem> Cart => HttpContext.Session.Get<List<CartItem>>(MySetting.CART_KEY) ?? new List<CartItem>();
+		public List<CartItem> Cart => GetCart();
 
 		private string? CurrentCustomerId => HttpContext.Session.Get<string>(MySetting.CUSTOMER_KEY);
+		private string? AppliedVoucherCode => HttpContext.Session.Get<string>(AppliedVoucherSessionKey);
 
 		public IActionResult Index()
 		{
+			PopulateCartPricingViewBag(Cart);
 			return View(Cart);
 		}
 
-		public IActionResult AddToCart(int id, int quantity = 1)
+		[HttpPost]
+		[ValidateAntiForgeryToken]
+		public IActionResult AddToCart(int id, int quantity = 1, string? returnUrl = null)
 		{
+			quantity = Math.Max(1, quantity);
 			var gioHang = Cart;
 			var item = gioHang.SingleOrDefault(p => p.MaHh == id);
 			if (item == null)
@@ -36,6 +63,12 @@ namespace ECommerceMVC.Controllers
 					TempData["Message"] = $"Không tìm thấy hàng hóa có mã {id}";
 					return Redirect("/404");
 				}
+				if (hangHoa.SoLuongTon <= 0)
+				{
+					TempData["ErrorMessage"] = "Sản phẩm đã hết hàng.";
+					return RedirectToSafeReturn(returnUrl);
+				}
+				quantity = Math.Min(quantity, hangHoa.SoLuongTon);
 				item = new CartItem
 				{
 					MaHh = hangHoa.MaHh,
@@ -48,10 +81,16 @@ namespace ECommerceMVC.Controllers
 			}
 			else
 			{
-				item.SoLuong += quantity;
+				item.SoLuong = stockService.ClampQuantityToStock(id, item.SoLuong + quantity);
 			}
 
-			HttpContext.Session.Set(MySetting.CART_KEY, gioHang);
+			SaveCart(gioHang);
+			TempData["SuccessMessage"] = "Đã thêm sản phẩm vào giỏ hàng.";
+
+			if (!string.IsNullOrWhiteSpace(returnUrl) && Url.IsLocalUrl(returnUrl))
+			{
+				return Redirect(returnUrl);
+			}
 
 			return RedirectToAction(nameof(Index));
 		}
@@ -63,9 +102,65 @@ namespace ECommerceMVC.Controllers
 			if (item != null)
 			{
 				gioHang.Remove(item);
-				HttpContext.Session.Set(MySetting.CART_KEY, gioHang);
+				SaveCart(gioHang);
 			}
 			return RedirectToAction(nameof(Index));
+		}
+
+		[HttpPost]
+		[ValidateAntiForgeryToken]
+		public IActionResult UpdateQuantity(int id, int quantity)
+		{
+			var gioHang = Cart;
+			var item = gioHang.SingleOrDefault(p => p.MaHh == id);
+			if (item == null)
+			{
+				return RedirectToAction(nameof(Index));
+			}
+
+			var clampedQuantity = stockService.ClampQuantityToStock(id, quantity);
+			if (clampedQuantity <= 0)
+			{
+				gioHang.Remove(item);
+				TempData["ErrorMessage"] = "Sản phẩm đã hết hàng và được xóa khỏi giỏ.";
+			}
+			else
+			{
+				item.SoLuong = clampedQuantity;
+			}
+			SaveCart(gioHang);
+
+			return RedirectToAction(nameof(Index));
+		}
+
+		[HttpPost]
+		[ValidateAntiForgeryToken]
+		public IActionResult ApplyVoucher(string code, string? returnUrl = null)
+		{
+			var cart = Cart;
+			var subtotal = cart.Sum(x => x.ThanhTien);
+			var result = voucherService.ValidateAndCalculateDiscount(code, subtotal);
+			if (result.Success)
+			{
+				HttpContext.Session.Set(AppliedVoucherSessionKey, result.Code);
+				TempData["SuccessMessage"] = result.Message;
+			}
+			else
+			{
+				HttpContext.Session.Remove(AppliedVoucherSessionKey);
+				TempData["ErrorMessage"] = result.Message;
+			}
+
+			return RedirectToSafeReturn(returnUrl);
+		}
+
+		[HttpPost]
+		[ValidateAntiForgeryToken]
+		public IActionResult RemoveVoucher(string? returnUrl = null)
+		{
+			HttpContext.Session.Remove(AppliedVoucherSessionKey);
+			TempData["SuccessMessage"] = "Đã xóa voucher khỏi đơn hàng.";
+			return RedirectToSafeReturn(returnUrl);
 		}
 
 		[HttpGet]
@@ -84,6 +179,13 @@ namespace ECommerceMVC.Controllers
 			}
 
 			ViewBag.Cart = gioHang;
+			var stockResult = stockService.ValidateCart(gioHang);
+			if (!stockResult.Success)
+			{
+				TempData["ErrorMessage"] = stockResult.Message;
+				return RedirectToAction(nameof(Index));
+			}
+
 			var model = new CheckoutVM();
 			var kh = db.KhachHangs.SingleOrDefault(x => x.MaKh == CurrentCustomerId);
 			if (kh != null)
@@ -95,6 +197,7 @@ namespace ECommerceMVC.Controllers
 				model.Email = kh.Email;
 			}
 
+			ApplyCheckoutPricing(model, gioHang);
 			return View(model);
 		}
 
@@ -114,9 +217,13 @@ namespace ECommerceMVC.Controllers
 				return RedirectToAction(nameof(Index));
 			}
 
-			if (!string.Equals(CurrentCustomerId, model.MaKh, StringComparison.OrdinalIgnoreCase))
+			model.MaKh = CurrentCustomerId!;
+			model.CachThanhToan = string.IsNullOrWhiteSpace(model.CachThanhToan) ? "COD" : model.CachThanhToan.Trim();
+			ApplyCheckoutPricing(model, gioHang);
+			var stockResult = stockService.ValidateCart(gioHang);
+			if (!stockResult.Success)
 			{
-				ModelState.AddModelError(nameof(model.MaKh), "Mã khách hàng không hợp lệ với tài khoản đang đăng nhập.");
+				ModelState.AddModelError(string.Empty, stockResult.Message);
 			}
 
 			var kh = db.KhachHangs.SingleOrDefault(x => x.MaKh == CurrentCustomerId);
@@ -131,29 +238,194 @@ namespace ECommerceMVC.Controllers
 				return View(model);
 			}
 
+			if (string.Equals(model.CachThanhToan, "VNPAY", StringComparison.OrdinalIgnoreCase))
+			{
+				try
+				{
+					var paymentUrl = vnPayService.CreatePaymentUrl(
+						model,
+						gioHang,
+						CurrentCustomerId!,
+						HttpContext.Connection.RemoteIpAddress?.ToString() ?? "127.0.0.1",
+						Url.Action(nameof(VnPayReturn), "Cart", null, Request.Scheme) ?? string.Empty);
+
+					var transactionReference = GetQueryParameter(paymentUrl, "vnp_TxnRef");
+					HttpContext.Session.Set(PendingVnPayOrderSessionKey, new PendingOrderDraft
+					{
+						CustomerId = CurrentCustomerId!,
+						HoTen = model.HoTen,
+						DienThoai = model.DienThoai,
+						Email = model.Email,
+						DiaChi = model.DiaChi,
+						GhiChu = model.GhiChu,
+						CachThanhToan = "VNPAY",
+						CachVanChuyen = string.IsNullOrWhiteSpace(model.CachVanChuyen) ? "Giao hàng tiêu chuẩn" : model.CachVanChuyen,
+						PhiVanChuyen = model.PhiVanChuyen,
+						TransactionReference = transactionReference
+					});
+
+					return Redirect(paymentUrl);
+				}
+				catch (Exception ex)
+				{
+					ModelState.AddModelError(nameof(model.CachThanhToan), $"Không thể khởi tạo thanh toán VNPay ({ex.Message}).");
+					ViewBag.Cart = gioHang;
+					return View(model);
+				}
+			}
+
+			if (kh == null)
+			{
+				ModelState.AddModelError(nameof(model.MaKh), "Không tìm thấy thông tin khách hàng để thanh toán.");
+				ViewBag.Cart = gioHang;
+				return View(model);
+			}
+
+			return CompleteNonVnPayCheckout(model, gioHang, kh);
+		}
+
+		[HttpGet]
+		public IActionResult VnPayReturn()
+		{
+			if (string.IsNullOrWhiteSpace(CurrentCustomerId))
+			{
+				return RedirectToAction("DangNhap", "KhachHang", new { returnUrl = Url.Action(nameof(Checkout), "Cart") });
+			}
+
+			var pendingOrder = HttpContext.Session.Get<PendingOrderDraft>(PendingVnPayOrderSessionKey);
+			var gioHang = Cart;
+			if (pendingOrder == null || !gioHang.Any())
+			{
+				TempData["ErrorMessage"] = "Không tìm thấy dữ liệu đơn hàng chờ thanh toán VNPay.";
+				return RedirectToAction(nameof(Checkout));
+			}
+
+			var result = vnPayService.ValidateReturn(Request.Query);
+			if (!result.SignatureValid)
+			{
+				TempData["ErrorMessage"] = "Chữ ký VNPay không hợp lệ.";
+				return RedirectToAction(nameof(Checkout));
+			}
+
+			if (!result.IsSuccess)
+			{
+				TempData["ErrorMessage"] = $"Thanh toán VNPay chưa thành công (mã phản hồi: {result.ResponseCode}).";
+				return RedirectToAction(nameof(Checkout));
+			}
+
+			if (!string.Equals(result.TransactionReference, pendingOrder.TransactionReference, StringComparison.Ordinal))
+			{
+				TempData["ErrorMessage"] = "Mã giao dịch VNPay không khớp với đơn hàng chờ.";
+				return RedirectToAction(nameof(Checkout));
+			}
+
+			var checkout = new CheckoutVM
+			{
+				MaKh = pendingOrder.CustomerId,
+				HoTen = pendingOrder.HoTen,
+				DienThoai = pendingOrder.DienThoai,
+				Email = pendingOrder.Email,
+				DiaChi = pendingOrder.DiaChi,
+				GhiChu = pendingOrder.GhiChu,
+				CachThanhToan = "VNPAY",
+				CachVanChuyen = pendingOrder.CachVanChuyen,
+				PhiVanChuyen = pendingOrder.PhiVanChuyen
+			};
+
+			var kh = db.KhachHangs.SingleOrDefault(x => x.MaKh == pendingOrder.CustomerId);
+			if (kh == null)
+			{
+				TempData["ErrorMessage"] = "Không tìm thấy khách hàng để hoàn tất đơn VNPay.";
+				return RedirectToAction(nameof(Checkout));
+			}
+
+			HttpContext.Session.Remove(PendingVnPayOrderSessionKey);
+			return CompleteSuccessfulCheckout(
+				checkout,
+				gioHang,
+				kh,
+				"VNPay",
+				$"VNPay - Mã GD: {result.TransactionNo}",
+				$"Thanh toán VNPay thành công - Ref {result.TransactionReference}");
+		}
+
+		[HttpGet]
+		public IActionResult VnPayIpn()
+		{
+			var result = vnPayService.ValidateReturn(Request.Query);
+			if (!result.SignatureValid)
+			{
+				return Json(new { RspCode = "97", Message = "Invalid checksum" });
+			}
+
+			if (!result.IsSuccess)
+			{
+				return Json(new { RspCode = "00", Message = "Confirm Failed Payment" });
+			}
+
+			return Json(new { RspCode = "00", Message = "Confirm Success" });
+		}
+
+		private IActionResult CompleteNonVnPayCheckout(CheckoutVM model, List<CartItem> gioHang, KhachHang kh)
+		{
+			var paymentResult = paymentSandboxService.ProcessSandboxPayment(model.CachThanhToan, model, gioHang.Sum(x => x.ThanhTien) + Math.Max(0, model.PhiVanChuyen));
+			if (!paymentResult.IsSuccess)
+			{
+				ModelState.AddModelError(nameof(model.CachThanhToan), "Không thể xử lý thanh toán. Vui lòng thử lại.");
+				ViewBag.Cart = gioHang;
+				return View(nameof(Checkout), model);
+			}
+
+			var paymentMethodLabel = paymentResult.IsSandbox
+				? $"{paymentResult.ProviderName} ({paymentResult.TransactionCode})"
+				: "COD";
+
+			return CompleteSuccessfulCheckout(model, gioHang, kh, paymentResult.ProviderName, paymentMethodLabel, paymentResult.StatusText);
+		}
+
+		private IActionResult CompleteSuccessfulCheckout(
+			CheckoutVM model,
+			List<CartItem> gioHang,
+			KhachHang kh,
+			string providerName,
+			string paymentMethodLabel,
+			string paymentStatus)
+		{
 			var trangThaiMoi = db.TrangThais.OrderBy(x => x.MaTrangThai).FirstOrDefault();
 			if (trangThaiMoi == null)
 			{
 				ModelState.AddModelError(string.Empty, "Chưa cấu hình trạng thái đơn hàng trong hệ thống.");
 				ViewBag.Cart = gioHang;
-				return View(model);
+				return View(nameof(Checkout), model);
 			}
+
+			var shippingFee = Math.Max(0, model.PhiVanChuyen);
+			var subtotal = gioHang.Sum(c => c.SoLuong * c.DonGia);
+			var total = subtotal + shippingFee;
 
 			using var transaction = db.Database.BeginTransaction();
 			try
 			{
+				var ghiChuThanhToan = string.IsNullOrWhiteSpace(model.GhiChu)
+					? paymentStatus
+					: $"{model.GhiChu} | {paymentStatus}";
+				if (ghiChuThanhToan.Length > 50)
+				{
+					ghiChuThanhToan = ghiChuThanhToan[..50];
+				}
+
 				var hoaDon = new HoaDon
 				{
-					MaKh = CurrentCustomerId!,
+					MaKh = kh.MaKh,
 					NgayDat = DateTime.Now,
 					NgayCan = DateTime.Now.AddDays(3),
 					HoTen = model.HoTen,
 					DiaChi = model.DiaChi,
-					CachThanhToan = "COD",
-					CachVanChuyen = model.CachVanChuyen,
-					PhiVanChuyen = model.PhiVanChuyen,
+					CachThanhToan = paymentMethodLabel,
+					CachVanChuyen = string.IsNullOrWhiteSpace(model.CachVanChuyen) ? "Giao hàng tiêu chuẩn" : model.CachVanChuyen,
+					PhiVanChuyen = shippingFee,
 					MaTrangThai = trangThaiMoi.MaTrangThai,
-					GhiChu = model.GhiChu
+					GhiChu = ghiChuThanhToan
 				};
 
 				db.HoaDons.Add(hoaDon);
@@ -172,7 +444,21 @@ namespace ECommerceMVC.Controllers
 				db.SaveChanges();
 
 				transaction.Commit();
-				HttpContext.Session.Remove(MySetting.CART_KEY);
+				ClearCart();
+
+				var orderLines = string.Join(string.Empty, gioHang.Select(item =>
+					$"<li>{item.TenHH} x{item.SoLuong}: {(item.SoLuong * item.DonGia):N0} VND</li>"));
+				var subject = $"[DEEPSEARCH] Xác nhận đơn hàng #{hoaDon.MaHd}";
+				var body = EmailTemplates.BuildCheckoutSuccess(kh.HoTen, hoaDon.MaHd, paymentStatus, paymentMethodLabel, orderLines, subtotal, shippingFee, total);
+
+				if (emailService.TrySend(kh.Email, subject, body, out var emailError))
+				{
+					TempData["SuccessMessage"] = $"Đặt hàng thành công qua {providerName}. Email xác nhận đã được gửi.";
+				}
+				else
+				{
+					TempData["ErrorMessage"] = $"Đặt hàng thành công nhưng chưa gửi được email xác nhận ({emailError}).";
+				}
 
 				return RedirectToAction(nameof(CheckoutSuccess), new { id = hoaDon.MaHd });
 			}
@@ -181,7 +467,7 @@ namespace ECommerceMVC.Controllers
 				transaction.Rollback();
 				ModelState.AddModelError(string.Empty, "Không thể tạo đơn hàng. Vui lòng thử lại.");
 				ViewBag.Cart = gioHang;
-				return View(model);
+				return View(nameof(Checkout), model);
 			}
 		}
 
@@ -193,14 +479,27 @@ namespace ECommerceMVC.Controllers
 				return RedirectToAction("DangNhap", "KhachHang");
 			}
 
-			var ownOrder = db.HoaDons.Any(x => x.MaHd == id && x.MaKh == CurrentCustomerId);
-			if (!ownOrder)
+			var order = db.HoaDons
+				.Include(x => x.ChiTietHds)
+				.SingleOrDefault(x => x.MaHd == id && x.MaKh == CurrentCustomerId);
+			if (order == null)
 			{
 				return RedirectToAction(nameof(LichSuDonHang));
 			}
 
-			ViewBag.OrderId = id;
-			return View();
+			var subtotal = order.ChiTietHds.Sum(c => c.SoLuong * (c.DonGia - c.GiamGia));
+			var model = new CheckoutSuccessVM
+			{
+				OrderId = order.MaHd,
+				TotalQuantityPaid = order.ChiTietHds.Sum(c => c.SoLuong),
+				SubtotalPaid = subtotal,
+				ShippingFee = order.PhiVanChuyen,
+				TotalPaid = subtotal + order.PhiVanChuyen,
+				PaymentMethod = order.CachThanhToan,
+				PaymentStatus = order.GhiChu ?? "Đã ghi nhận đơn hàng"
+			};
+
+			return View(model);
 		}
 
 		[HttpGet]
@@ -212,7 +511,7 @@ namespace ECommerceMVC.Controllers
 			}
 
 			var items = db.HoaDons
-				.Where(x => x.MaKh == CurrentCustomerId && x.CachThanhToan == "COD")
+				.Where(x => x.MaKh == CurrentCustomerId)
 				.OrderByDescending(x => x.NgayDat)
 				.Select(x => new LichSuDonHangItemVM
 				{
@@ -240,7 +539,7 @@ namespace ECommerceMVC.Controllers
 				.Include(x => x.MaTrangThaiNavigation)
 				.Include(x => x.ChiTietHds)
 					.ThenInclude(c => c.MaHhNavigation)
-				.SingleOrDefault(x => x.MaHd == id && x.MaKh == CurrentCustomerId && x.CachThanhToan == "COD");
+				.SingleOrDefault(x => x.MaHd == id && x.MaKh == CurrentCustomerId);
 
 			if (data == null)
 			{
@@ -262,6 +561,7 @@ namespace ECommerceMVC.Controllers
 				{
 					MaHh = c.MaHh,
 					TenHh = c.MaHhNavigation.TenHh,
+					Hinh = c.MaHhNavigation.Hinh ?? string.Empty,
 					SoLuong = c.SoLuong,
 					DonGia = c.DonGia,
 					GiamGia = c.GiamGia
@@ -269,6 +569,162 @@ namespace ECommerceMVC.Controllers
 			};
 
 			return View(model);
+		}
+
+		private IActionResult RedirectToSafeReturn(string? returnUrl)
+		{
+			if (!string.IsNullOrWhiteSpace(returnUrl) && Url.IsLocalUrl(returnUrl))
+			{
+				return Redirect(returnUrl);
+			}
+
+			return RedirectToAction(nameof(Index));
+		}
+
+		private List<CartItem> GetCart()
+		{
+			var sessionCart = HttpContext.Session.Get<List<CartItem>>(MySetting.CART_KEY) ?? new List<CartItem>();
+			if (string.IsNullOrWhiteSpace(CurrentCustomerId))
+			{
+				return sessionCart;
+			}
+
+			var dbCart = db.GioHangItems
+				.AsNoTracking()
+				.Where(x => x.MaKh == CurrentCustomerId)
+				.Join(
+					db.HangHoas.AsNoTracking(),
+					c => c.MaHh,
+					h => h.MaHh,
+					(c, h) => new CartItem
+					{
+						MaHh = h.MaHh,
+						TenHH = h.TenHh,
+						DonGia = h.DonGia ?? 0,
+						Hinh = h.Hinh ?? string.Empty,
+						SoLuong = Math.Max(0, c.SoLuong)
+					})
+				.ToList();
+
+			if (dbCart.Count == 0 && sessionCart.Count > 0)
+			{
+				SaveCart(sessionCart);
+				return sessionCart;
+			}
+
+			HttpContext.Session.Set(MySetting.CART_KEY, dbCart);
+			return dbCart;
+		}
+
+		private void SaveCart(List<CartItem> cart)
+		{
+			HttpContext.Session.Set(MySetting.CART_KEY, cart);
+			if (string.IsNullOrWhiteSpace(CurrentCustomerId))
+			{
+				return;
+			}
+
+			var now = DateTime.Now;
+			var normalized = cart
+				.Where(x => x.SoLuong > 0)
+				.GroupBy(x => x.MaHh)
+				.Select(g => new { MaHh = g.Key, SoLuong = g.Sum(x => x.SoLuong) })
+				.ToList();
+
+			var existed = db.GioHangItems
+				.Where(x => x.MaKh == CurrentCustomerId)
+				.ToList();
+
+			var existedMap = existed.ToDictionary(x => x.MaHh, x => x);
+			foreach (var row in normalized)
+			{
+				if (existedMap.TryGetValue(row.MaHh, out var item))
+				{
+					item.SoLuong = row.SoLuong;
+					item.UpdatedAt = now;
+				}
+				else
+				{
+					db.GioHangItems.Add(new GioHangItem
+					{
+						MaKh = CurrentCustomerId!,
+						MaHh = row.MaHh,
+						SoLuong = row.SoLuong,
+						CreatedAt = now,
+						UpdatedAt = now
+					});
+				}
+			}
+
+			var keepIds = normalized.Select(x => x.MaHh).ToHashSet();
+			var toDelete = existed.Where(x => !keepIds.Contains(x.MaHh)).ToList();
+			if (toDelete.Count > 0)
+			{
+				db.GioHangItems.RemoveRange(toDelete);
+			}
+
+			db.SaveChanges();
+		}
+
+		private void ClearCart()
+		{
+			HttpContext.Session.Remove(MySetting.CART_KEY);
+			if (string.IsNullOrWhiteSpace(CurrentCustomerId))
+			{
+				return;
+			}
+
+			var items = db.GioHangItems.Where(x => x.MaKh == CurrentCustomerId).ToList();
+			if (items.Count == 0)
+			{
+				return;
+			}
+
+			db.GioHangItems.RemoveRange(items);
+			db.SaveChanges();
+		}
+
+		private void ApplyCheckoutPricing(CheckoutVM model, List<CartItem> cartItems)
+		{
+			var subtotal = cartItems.Sum(x => x.ThanhTien);
+			var shippingFee = shippingFeeService.Calculate(model.DiaChi, model.CachVanChuyen, subtotal);
+			var voucher = voucherService.ValidateAndCalculateDiscount(AppliedVoucherCode, subtotal);
+			var discount = voucher.Success ? voucher.DiscountAmount : 0d;
+
+			model.DiscountAmount = discount;
+			model.PhiVanChuyen = shippingFee;
+			model.VoucherCode = voucher.Success ? voucher.Code : null;
+		}
+
+		private void PopulateCartPricingViewBag(List<CartItem> cartItems)
+		{
+			var subtotal = cartItems.Sum(x => x.ThanhTien);
+			var shippingFee = shippingFeeService.Calculate(null, null, subtotal);
+			var voucher = voucherService.ValidateAndCalculateDiscount(AppliedVoucherCode, subtotal);
+			var discount = voucher.Success ? voucher.DiscountAmount : 0d;
+
+			ViewBag.CartSubtotal = subtotal;
+			ViewBag.ShippingFee = shippingFee;
+			ViewBag.CartDiscount = discount;
+			ViewBag.CartTotal = Math.Max(0d, subtotal - discount + shippingFee);
+			ViewBag.AppliedVoucherCode = voucher.Success ? voucher.Code : null;
+			ViewBag.AppliedVoucherMessage = voucher.Success ? voucher.Message : null;
+		}
+
+		private static string GetQueryParameter(string url, string key)
+		{
+			var uri = new Uri(url);
+			var query = uri.Query.TrimStart('?').Split('&', StringSplitOptions.RemoveEmptyEntries);
+			foreach (var part in query)
+			{
+				var pieces = part.Split('=', 2);
+				if (pieces.Length == 2 && string.Equals(pieces[0], key, StringComparison.Ordinal))
+				{
+					return Uri.UnescapeDataString(pieces[1]);
+				}
+			}
+
+			return string.Empty;
 		}
 	}
 }

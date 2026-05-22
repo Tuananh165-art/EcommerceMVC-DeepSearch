@@ -1,50 +1,379 @@
 @model ECommerceMVC.ViewModels.DangNhapVM
 @{
-    ViewData["Title"] = "Đăng nhập";
+    ViewData["Title"] = "Đăng Nhập | DEEPSEARCH";
 }
 
-<div class="cart-table-area section-padding-100">
-    <div class="container-fluid">
-        <div class="row justify-content-center">
-            <div class="col-12 col-lg-6">
-                <div class="checkout_details_area mt-50 clearfix">
-                    <div class="cart-title">
-                        <h2>Đăng nhập tài khoản khách hàng</h2>
+<div class="auth-page-shell">
+    <div class="container-modern auth-page-container">
+        <div class="auth-login-card reveal">
+            <div class="auth-login-visual">
+                <div class="auth-visual-glow auth-visual-glow-top"></div>
+                <div class="auth-visual-glow auth-visual-glow-bottom"></div>
+
+                <div class="auth-visual-copy">
+                    <span class="auth-visual-kicker">DEEPSEARCH</span>
+                    <h2>Chào mừng bạn trở lại!</h2>
+                    <p>
+                        Đăng nhập để tiếp tục khám phá catalog lifestyle được tuyển chọn kỹ lưỡng và hoàn tất hành trình mua sắm của bạn một cách mượt mà.
+                    </p>
+                </div>
+
+                <div class="auth-visual-note">
+                    <strong>Mua sắm thuận tiện</strong>
+                    <span>Lưu giỏ hàng, tiếp tục thanh toán và theo dõi lịch sử đơn hàng trên cùng một tài khoản.</span>
+                </div>
+            </div>
+
+            <div class="auth-login-form-panel">
+                <div class="auth-form-header">
+                    <span class="auth-form-kicker">Đăng nhập tài khoản</span>
+                    <h1>Tiếp tục tới giỏ hàng và thanh toán</h1>
+                    <p>Vui lòng điền thông tin đăng nhập của bạn để tiếp tục phiên mua sắm hiện tại.</p>
+                </div>
+
+                <form asp-action="DangNhap" method="post" class="auth-form-stack">
+                    <input asp-for="ReturnUrl" type="hidden" />
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger border-0 text-sm p-3 mb-0 auth-validation"></div>
+
+                    <div class="auth-field-group">
+                        <label asp-for="MaKh" class="auth-label">Tên đăng nhập</label>
+                        <div class="auth-input-wrap">
+                            <span class="auth-input-icon"><i data-icon="user" data-size="16px"></i></span>
+                            <input asp-for="MaKh" class="auth-input" placeholder="Ví dụ: khachhang01" required />
+                        </div>
+                        <span asp-validation-for="MaKh" class="text-danger text-xs mt-1 d-block"></span>
                     </div>
 
-                    <form asp-action="DangNhap" method="post">
-                        <input asp-for="ReturnUrl" type="hidden" />
-                        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
-
-                        <div class="mb-3">
-                            <label asp-for="MaKh" class="mb-2"></label>
-                            <input asp-for="MaKh" class="form-control" placeholder="Ví dụ: khachhang01" />
-                            <span asp-validation-for="MaKh" class="text-danger"></span>
+                    <div class="auth-field-group">
+                        <label asp-for="MatKhau" class="auth-label">Mật khẩu</label>
+                        <div class="auth-input-wrap">
+                            <span class="auth-input-icon"><i data-icon="lock" data-size="16px"></i></span>
+                            <input asp-for="MatKhau" type="password" class="auth-input" placeholder="Nhập mật khẩu" required />
                         </div>
-
-                        <div class="mb-3">
-                            <label asp-for="MatKhau" class="mb-2"></label>
-                            <input asp-for="MatKhau" class="form-control" placeholder="Nhập mật khẩu" />
-                            <span asp-validation-for="MatKhau" class="text-danger"></span>
-                        </div>
-
-                        <div class="form-check mb-4">
-                            <input asp-for="GhiNho" class="form-check-input" />
-                            <label asp-for="GhiNho" class="form-check-label"></label>
-                        </div>
-
-                        <button type="submit" class="btn amado-btn w-100">Đăng nhập</button>
-                    </form>
-
-                    <div class="mt-3 text-center">
-                        Chưa có tài khoản?
-                        <a asp-action="DangKy" asp-controller="KhachHang">Đăng ký ngay</a>
+                        <span asp-validation-for="MatKhau" class="text-danger text-xs mt-1 d-block"></span>
                     </div>
+
+                    <div class="auth-form-row">
+                        <div class="form-check form-switch auth-remember-wrap">
+                            <input asp-for="GhiNho" class="form-check-input auth-remember-input" type="checkbox" />
+                            <label asp-for="GhiNho" class="form-check-label auth-remember-label">Duy trì đăng nhập</label>
+                        </div>
+                        <a asp-action="ForgotPassword" asp-controller="KhachHang" class="text-sm text-decoration-none" style="color: var(--accent-primary); font-weight: 700;">Quên mật khẩu?</a>
+                    </div>
+
+                    <button type="submit" class="btn-modern btn-primary-modern w-100 py-3 rounded-pill shadow-glow" data-click-notify="Đang xác thực thông tin...">
+                        Đăng nhập
+                    </button>
+                </form>
+
+                <div class="auth-form-footer">
+                    <span>Chưa có tài khoản?</span>
+                    <a asp-action="DangKy" asp-controller="KhachHang">Đăng ký ngay</a>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+@section Styles {
+    <style>
+        .auth-page-shell {
+            min-height: calc(100vh - var(--navbar-height));
+            padding: clamp(2rem, 4vw, 4rem) 0;
+            background:
+                radial-gradient(circle at top right, rgba(180, 139, 96, 0.14), transparent 22%),
+                radial-gradient(circle at bottom left, rgba(93, 62, 36, 0.12), transparent 20%),
+                linear-gradient(180deg, rgba(255, 250, 244, 0.94), rgba(246, 238, 228, 0.92));
+        }
+
+        .auth-page-container {
+            max-width: 1180px;
+        }
+
+        .auth-login-card {
+            display: grid;
+            grid-template-columns: minmax(320px, 0.92fr) minmax(0, 1.08fr);
+            border-radius: 2rem;
+            overflow: hidden;
+            border: 1px solid rgba(99, 75, 55, 0.12);
+            background: rgba(255, 252, 248, 0.92);
+            box-shadow: 0 28px 80px rgba(57, 41, 27, 0.14);
+        }
+
+        .auth-login-visual {
+            position: relative;
+            padding: clamp(2rem, 4vw, 3rem);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            min-height: 620px;
+            color: #fffaf4;
+            background:
+                linear-gradient(180deg, rgba(31, 24, 19, 0.88), rgba(64, 46, 33, 0.92)),
+                radial-gradient(circle at top left, rgba(220, 188, 150, 0.18), transparent 34%),
+                linear-gradient(135deg, #2b211a 0%, #4f3829 100%);
+        }
+
+        .auth-visual-glow {
+            position: absolute;
+            border-radius: 999px;
+            filter: blur(45px);
+            opacity: 0.28;
+            pointer-events: none;
+        }
+
+        .auth-visual-glow-top {
+            width: 220px;
+            height: 220px;
+            top: -80px;
+            left: -60px;
+            background: rgba(255, 220, 180, 0.75);
+        }
+
+        .auth-visual-glow-bottom {
+            width: 200px;
+            height: 200px;
+            right: -70px;
+            bottom: -70px;
+            background: rgba(197, 146, 92, 0.55);
+        }
+
+        .auth-visual-copy,
+        .auth-visual-note {
+            position: relative;
+            z-index: 1;
+        }
+
+        .auth-visual-kicker {
+            display: inline-flex;
+            width: fit-content;
+            padding: 0.45rem 0.85rem;
+            border-radius: 999px;
+            border: 1px solid rgba(255,255,255,0.16);
+            background: rgba(255,255,255,0.08);
+            font-size: 0.76rem;
+            font-weight: 700;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            margin-bottom: 1.4rem;
+        }
+
+        .auth-visual-copy h2 {
+            margin: 0 0 1rem;
+            font-size: clamp(2rem, 3vw, 3rem);
+            line-height: 1.12;
+            color: #fffaf4;
+        }
+
+        .auth-visual-copy p {
+            max-width: 34ch;
+            margin: 0;
+            color: rgba(255, 245, 234, 0.84);
+            font-size: 1rem;
+            line-height: 1.8;
+        }
+
+        .auth-visual-note {
+            padding: 1.1rem 1.2rem;
+            border-radius: 1.25rem;
+            border: 1px solid rgba(255,255,255,0.12);
+            background: rgba(255,255,255,0.07);
+            backdrop-filter: blur(14px);
+        }
+
+        .auth-visual-note strong {
+            display: block;
+            margin-bottom: 0.35rem;
+            color: #fffaf4;
+            font-size: 0.95rem;
+        }
+
+        .auth-visual-note span {
+            color: rgba(255, 245, 234, 0.74);
+            font-size: 0.9rem;
+            line-height: 1.7;
+        }
+
+        .auth-login-form-panel {
+            padding: clamp(2rem, 4vw, 3.25rem);
+            background: linear-gradient(180deg, rgba(255,255,255,0.96), rgba(252,247,241,0.94));
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .auth-form-header {
+            margin-bottom: 1.75rem;
+        }
+
+        .auth-form-kicker {
+            display: inline-block;
+            margin-bottom: 0.6rem;
+            color: var(--accent-primary);
+            font-size: 0.78rem;
+            font-weight: 700;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+        }
+
+        .auth-form-header h1 {
+            margin: 0 0 0.75rem;
+            font-size: clamp(2rem, 3vw, 2.7rem);
+            line-height: 1.12;
+            color: var(--text-primary);
+        }
+
+        .auth-form-header p {
+            max-width: 52ch;
+            margin: 0;
+            color: var(--text-secondary);
+            font-size: 0.98rem;
+            line-height: 1.75;
+        }
+
+        .auth-form-stack {
+            display: grid;
+            gap: 1.15rem;
+        }
+
+        .auth-validation {
+            border-radius: 1rem;
+        }
+
+        .auth-field-group {
+            display: grid;
+            gap: 0.45rem;
+        }
+
+        .auth-label {
+            margin: 0;
+            color: var(--text-primary);
+            font-size: 0.82rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .auth-input-wrap {
+            display: grid;
+            grid-template-columns: 56px minmax(0, 1fr);
+            align-items: center;
+            border-radius: 1rem;
+            border: 1px solid rgba(112, 89, 67, 0.16);
+            background: rgba(245, 238, 229, 0.8);
+            overflow: hidden;
+            transition: border-color 160ms ease, box-shadow 160ms ease, background 160ms ease;
+        }
+
+        .auth-input-wrap:focus-within {
+            border-color: rgba(160, 117, 76, 0.45);
+            background: rgba(250, 245, 238, 0.96);
+            box-shadow: 0 0 0 4px rgba(190, 152, 111, 0.12);
+        }
+
+        .auth-input-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: var(--text-secondary);
+            border-right: 1px solid rgba(112, 89, 67, 0.12);
+            background: rgba(255,255,255,0.45);
+        }
+
+        .auth-input {
+            width: 100%;
+            min-width: 0;
+            border: 0;
+            outline: 0;
+            background: transparent;
+            color: var(--text-primary);
+            padding: 1rem 1rem 1rem 0.95rem;
+            font-size: 0.98rem;
+        }
+
+        .auth-input::placeholder {
+            color: #9b8d80;
+        }
+
+        .auth-form-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .auth-remember-wrap {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.6rem;
+            margin: 0;
+        }
+
+        .auth-remember-input {
+            width: 2.5rem !important;
+            height: 1.35rem;
+            margin-top: 0;
+            cursor: pointer;
+        }
+
+        .auth-remember-label {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            cursor: pointer;
+        }
+
+        .auth-form-footer {
+            display: flex;
+            gap: 0.4rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 1.25rem;
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+
+        .auth-form-footer a {
+            color: var(--accent-primary);
+            text-decoration: none;
+            font-weight: 700;
+        }
+
+        .auth-form-footer a:hover {
+            color: var(--accent-primary-hover);
+        }
+
+        @@media (max-width: 991.98px) {
+            .auth-login-card {
+                grid-template-columns: 1fr;
+            }
+
+            .auth-login-visual {
+                min-height: 360px;
+            }
+        }
+
+        @@media (max-width: 767.98px) {
+            .auth-page-shell {
+                padding: 1.25rem 0 2rem;
+            }
+
+            .auth-login-card {
+                border-radius: 1.5rem;
+            }
+
+            .auth-login-visual,
+            .auth-login-form-panel {
+                padding: 1.4rem;
+            }
+
+            .auth-visual-copy p,
+            .auth-form-header p {
+                max-width: none;
+            }
+        }
+    </style>
+}
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />

@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(dotnet build \"f:\\\\ECommerceMVC\\\\ECommerceMVC\\\\ECommerceMVC.csproj\")",
+      "PowerShell(dotnet build \"f:\\\\ECommerceMVC\\\\ECommerceMVC\\\\ECommerceMVC.csproj\" /p:UseAppHost=false)",
+      "PowerShell(dotnet build \"f:\\\\ECommerceMVC\\\\ECommerceMVC\\\\ECommerceMVC.csproj\" -o \"f:\\\\ECommerceMVC\\\\ECommerceMVC\\\\bin_temp\")",
+      "Bash(dotnet restore *)",
+      "Bash(dotnet list *)"
+    ]
+  }
+}

@@ -1,71 +1,137 @@
-﻿@model ECommerceMVC.Data.HangHoa
+@model ECommerceMVC.Data.HangHoa
 
 @{
-    ViewData["Title"] = "Create";
+    ViewData["Title"] = "Create product";
 }
 
-<h1>Create</h1>
+@section Styles {
+    <style>
+        .checkout_details_area form select.form-control {
+            display: block !important;
+            width: 100%;
+            min-width: 100%;
+            height: 60px;
+            line-height: 60px;
+            padding: 0 45px 0 30px;
+            color: #6b6b6b;
+            font-size: 14px;
+            border: none;
+            border-radius: 0;
+            background-color: #f5f7fa;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            background-image: linear-gradient(45deg, transparent 50%, #8f8f8f 50%), linear-gradient(135deg, #8f8f8f 50%, transparent 50%);
+            background-position: calc(100% - 24px) calc(50% - 3px), calc(100% - 18px) calc(50% - 3px);
+            background-size: 6px 6px, 6px 6px;
+            background-repeat: no-repeat;
+        }
 
-<h4>HangHoa</h4>
-<hr />
-<div class="row">
-    <div class="col-md-4">
-        <form asp-action="Create">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <div class="form-group">
-                <label asp-for="TenHh" class="control-label"></label>
-                <input asp-for="TenHh" class="form-control" />
-                <span asp-validation-for="TenHh" class="text-danger"></span>
+        .checkout_details_area form select.no-nice-select + .nice-select {
+            display: none !important;
+        }
+    </style>
+}
+
+<div class="cart-table-area section-padding-100">
+    <div class="container-fluid">
+        <div class="row justify-content-center">
+            <div class="col-12 col-lg-9">
+                <div class="checkout_details_area mt-50 clearfix">
+                    <div class="cart-title">
+                        <h2>Create product</h2>
+                    </div>
+
+                    <form asp-action="Create" method="post" enctype="multipart/form-data">
+                        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="TenHh" class="mb-2"></label>
+                                <input asp-for="TenHh" class="form-control" />
+                                <span asp-validation-for="TenHh" class="text-danger"></span>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="TenAlias" class="mb-2"></label>
+                                <input asp-for="TenAlias" class="form-control" />
+                                <span asp-validation-for="TenAlias" class="text-danger"></span>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="MaLoai" class="mb-2"></label>
+                                <select asp-for="MaLoai" class="form-control w-100 no-nice-select" asp-items="ViewBag.MaLoai"></select>
+                                <span asp-validation-for="MaLoai" class="text-danger"></span>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="MaNcc" class="mb-2"></label>
+                                <select asp-for="MaNcc" class="form-control w-100 no-nice-select" asp-items="ViewBag.MaNcc"></select>
+                                <span asp-validation-for="MaNcc" class="text-danger"></span>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="DonGia" class="mb-2"></label>
+                                <input asp-for="DonGia" class="form-control" />
+                                <span asp-validation-for="DonGia" class="text-danger"></span>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="SoLuongTon" class="mb-2"></label>
+                                <input asp-for="SoLuongTon" class="form-control" />
+                                <span asp-validation-for="SoLuongTon" class="text-danger"></span>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="GiamGia" class="mb-2"></label>
+                                <input asp-for="GiamGia" class="form-control" />
+                                <span asp-validation-for="GiamGia" class="text-danger"></span>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="NgaySx" class="mb-2"></label>
+                                <input asp-for="NgaySx" class="form-control" />
+                                <span asp-validation-for="NgaySx" class="text-danger"></span>
+                            </div>
+
+                            <div class="col-12 mb-3">
+                                <label asp-for="MoTaDonVi" class="mb-2"></label>
+                                <input asp-for="MoTaDonVi" class="form-control" />
+                                <span asp-validation-for="MoTaDonVi" class="text-danger"></span>
+                            </div>
+
+                            <div class="col-12 mb-3">
+                                <label for="hinhUpload" class="mb-2">Image</label>
+                                <input type="file" id="hinhUpload" name="hinhUpload" class="form-control" accept="image/*" />
+                                <input asp-for="Hinh" type="hidden" />
+                                <span asp-validation-for="Hinh" class="text-danger"></span>
+                            </div>
+
+                            <div class="col-12 mb-3">
+                                <label asp-for="MoTa" class="mb-2"></label>
+                                <textarea asp-for="MoTa" class="form-control"></textarea>
+                                <span asp-validation-for="MoTa" class="text-danger"></span>
+                            </div>
+
+                            <div class="col-12 mt-2">
+                                <button type="submit" class="btn amado-btn w-100">Create product</button>
+                            </div>
+                        </div>
+                    </form>
+
+                </div>
             </div>
-            <div class="form-group">
-                <label asp-for="TenAlias" class="control-label"></label>
-                <input asp-for="TenAlias" class="form-control" />
-                <span asp-validation-for="TenAlias" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="MaLoai" class="control-label"></label>
-                <select asp-for="MaLoai" class ="form-control" asp-items="ViewBag.MaLoai"></select>
-            </div>
-            <div class="form-group">
-                <label asp-for="MoTaDonVi" class="control-label"></label>
-                <input asp-for="MoTaDonVi" class="form-control" />
-                <span asp-validation-for="MoTaDonVi" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Hinh" class="control-label"></label>
-                <input asp-for="Hinh" class="form-control" />
-                <span asp-validation-for="Hinh" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="GiamGia" class="control-label"></label>
-                <input asp-for="GiamGia" class="form-control" />
-                <span asp-validation-for="GiamGia" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="SoLanXem" class="control-label"></label>
-                <input asp-for="SoLanXem" class="form-control" />
-                <span asp-validation-for="SoLanXem" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="MoTa" class="control-label"></label>
-                <input asp-for="MoTa" class="form-control" />
-                <span asp-validation-for="MoTa" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="MaNcc" class="control-label"></label>
-                <select asp-for="MaNcc" class ="form-control" asp-items="ViewBag.MaNcc"></select>
-            </div>
-            <div class="form-group">
-                <input type="submit" value="Create" class="btn btn-primary" />
-            </div>
-        </form>
+        </div>
     </div>
 </div>
 
-<div>
-    <a asp-action="Index">Back to List</a>
-</div>
-
 @section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        (function ($) {
+            $(function () {
+                $('select.no-nice-select').removeClass('nice-select-hidden').css('display', 'block');
+            });
+        })(jQuery);
+    </script>
 }

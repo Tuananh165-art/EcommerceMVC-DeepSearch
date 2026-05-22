@@ -1,0 +1,12 @@
+﻿@model AdminCategoryFormVM
+@{ Layout = "_AdminLayout"; ViewData["Title"] = Model.MaLoai == 0 ? "Thêm danh mục" : "Sửa danh mục"; }
+<div class="admin-card"><form method="post" enctype="multipart/form-data"><input type="hidden" asp-for="MaLoai" /><input type="hidden" asp-for="Hinh" /><div asp-validation-summary="ModelOnly" class="text-danger"></div><div class="row g-3">
+<div class="col-md-6"><label asp-for="TenLoai" class="form-label"></label><input asp-for="TenLoai" class="form-control" /><span asp-validation-for="TenLoai" class="text-danger"></span></div>
+<div class="col-md-6"><label asp-for="TenLoaiAlias" class="form-label"></label><input asp-for="TenLoaiAlias" class="form-control" /></div>
+<div class="col-md-6"><label asp-for="ParentCategoryId" class="form-label"></label><select asp-for="ParentCategoryId" class="form-select" asp-items="ViewBag.ParentCategories"><option value="">Danh mục gốc</option></select></div>
+<div class="col-md-3"><label asp-for="SortOrder" class="form-label"></label><input asp-for="SortOrder" class="form-control" /></div>
+<div class="col-md-3"><label class="form-label d-block">Trạng thái</label><input asp-for="IsVisible" class="form-check-input" /> <label asp-for="IsVisible" class="form-check-label"></label></div>
+<div class="col-md-6"><label class="form-label">Ảnh danh mục</label><input type="file" name="hinhUpload" class="form-control" accept="image/*" /></div>
+<div class="col-12"><label asp-for="MoTa" class="form-label"></label><textarea asp-for="MoTa" class="form-control" rows="4"></textarea></div>
+</div><div class="mt-4 d-flex gap-2"><button class="btn btn-primary">Lưu</button><a class="btn btn-outline-secondary" asp-action="Categories">Hủy</a></div></form></div>
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

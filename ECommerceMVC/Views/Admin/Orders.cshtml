@@ -1,0 +1,90 @@
+﻿@model List<AdminOrderRowVM>
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Quản lý đơn hàng";
+}
+
+<div class="admin-card">
+    <form method="get" class="row g-2 align-items-end">
+        <div class="col-md-3">
+            <label class="form-label">Tìm mã đơn / khách / thanh toán</label>
+            <input name="q" value="@ViewBag.Query" class="form-control" />
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">Trạng thái</label>
+            <select name="status" class="form-select" asp-items="ViewBag.Statuses"><option value="">Tất cả</option></select>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">Phương thức</label>
+            <input name="payment" value="@ViewBag.Payment" class="form-control" placeholder="COD, VNPAY, MOMO" />
+        </div>
+        <div class="col-md-3 d-flex gap-2">
+            <button class="btn btn-primary">Lọc</button>
+            <a asp-action="Orders" class="btn btn-admin-soft">Đặt lại</a>
+        </div>
+    </form>
+</div>
+
+<div class="admin-card">
+    <div class="table-responsive admin-table-wrap" style="max-height: 62vh;">
+        <table class="table table-admin table-hover align-middle">
+            <thead>
+                <tr>
+                    <th>Mã</th>
+                    <th>Khách hàng</th>
+                    <th>Ngày đặt</th>
+                    <th>Thanh toán</th>
+                    <th>Trạng thái</th>
+                    <th>Tổng</th>
+                    <th>Thao tác nhanh</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var o in Model)
+            {
+                var statusClass = "status-chip status-pending";
+                var statusText = (o.StatusName ?? string.Empty).Trim();
+                var lower = statusText.ToLowerInvariant();
+                if (lower.Contains("complete") || lower.Contains("hoàn tất") || lower.Contains("đã giao"))
+                {
+                    statusClass = "status-chip status-success";
+                }
+                else if (lower.Contains("hủy") || lower.Contains("cancel") || lower.Contains("lỗi"))
+                {
+                    statusClass = "status-chip status-failed";
+                }
+                else if (lower.Contains("đang giao") || lower.Contains("shipping"))
+                {
+                    statusClass = "status-chip status-info";
+                }
+                <tr>
+                    <td>#@o.MaHd</td>
+                    <td>@o.CustomerName<div class="small text-muted">@o.CustomerId</div></td>
+                    <td>@o.NgayDat.ToString("dd/MM/yyyy HH:mm")</td>
+                    <td>@o.PaymentMethod</td>
+                    <td><span class="@statusClass">@o.StatusName</span></td>
+                    <td>@o.Total.ToString("N0") đ</td>
+                    <td>
+                        <div class="d-flex flex-wrap gap-1">
+                            <form method="post" asp-action="OrderQuickStatus" asp-route-id="@o.MaHd" class="d-inline">
+                                <input type="hidden" name="actionName" value="shipping" />
+                                <button class="btn btn-sm btn-admin-soft">Đang giao</button>
+                            </form>
+                            <form method="post" asp-action="OrderQuickStatus" asp-route-id="@o.MaHd" class="d-inline">
+                                <input type="hidden" name="actionName" value="complete" />
+                                <button class="btn btn-sm btn-outline-success">Hoàn tất</button>
+                            </form>
+                            <form method="post" asp-action="OrderQuickStatus" asp-route-id="@o.MaHd" class="d-inline">
+                                <input type="hidden" name="actionName" value="cancel" />
+                                <button class="btn btn-sm btn-admin-danger" onclick="return confirm('Bạn có chắc muốn hủy đơn này?');">Hủy</button>
+                            </form>
+                        </div>
+                    </td>
+                    <td class="text-end"><a class="btn btn-sm btn-outline-primary" asp-action="OrderDetails" asp-route-id="@o.MaHd">Chi tiết</a></td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</div>

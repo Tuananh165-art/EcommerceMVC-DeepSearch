@@ -25,6 +25,18 @@ public partial class HangHoa
 
     public int SoLanXem { get; set; }
 
+    public int SoLuongTon { get; set; }
+
+    public string? MauSac { get; set; }
+
+    public string? ChatLieu { get; set; }
+
+    public string? KichThuoc { get; set; }
+
+    public string? BaoHanh { get; set; }
+
+    public string? PhongCach { get; set; }
+
     public string? MoTa { get; set; }
 
     public string MaNcc { get; set; } = null!;

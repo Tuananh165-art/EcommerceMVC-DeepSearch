@@ -17,8 +17,14 @@ namespace ECommerceMVC.Helpers
 				var targetDir = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "Hinh", folder);
 				Directory.CreateDirectory(targetDir);
 
-				var extension = Path.GetExtension(safeFileName);
-				var finalFileName = $"{Path.GetFileNameWithoutExtension(safeFileName)}_{Guid.NewGuid():N}{extension}";
+				var extension = Path.GetExtension(safeFileName)?.ToLowerInvariant() ?? string.Empty;
+				if (extension.Length > 10)
+				{
+					extension = extension.Substring(0, 10);
+				}
+
+				// Cột Hinh trong DB đang giới hạn 50 ký tự -> dùng tên ngắn cố định để tránh truncate
+				var finalFileName = $"{Guid.NewGuid():N}{extension}";
 				var fullPath = Path.Combine(targetDir, finalFileName);
 
 				using (var myfile = new FileStream(fullPath, FileMode.Create))
@@ -31,6 +37,38 @@ namespace ECommerceMVC.Helpers
 			{
 				return string.Empty;
 			}
+		}
+
+		public static string GetHangHoaImageUrl(string? fileName, int? maHh = null)
+		{
+			if (!string.IsNullOrWhiteSpace(fileName))
+			{
+				var safeFileName = Path.GetFileName(fileName.Trim());
+				var fullPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "Hinh", "HangHoa", safeFileName);
+				if (File.Exists(fullPath))
+				{
+					return $"/Hinh/HangHoa/{safeFileName}";
+				}
+			}
+
+			var fallbackIndex = ((maHh ?? 1) - 1) % 6 + 1;
+			return $"/amado/img/product-img/product{fallbackIndex}.jpg";
+		}
+
+		public static string GetLoaiImageUrl(string? fileName, int? maLoai = null)
+		{
+			if (!string.IsNullOrWhiteSpace(fileName))
+			{
+				var safeFileName = Path.GetFileName(fileName.Trim());
+				var fullPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "Hinh", "Loai", safeFileName);
+				if (File.Exists(fullPath))
+				{
+					return $"/Hinh/Loai/{safeFileName}";
+				}
+			}
+
+			var fallbackIndex = ((maLoai ?? 1) - 1) % 3 + 1;
+			return $"/amado/img/bg-img/{fallbackIndex}.jpg";
 		}
 
 		public static string GenerateRamdomKey(int length = 5)

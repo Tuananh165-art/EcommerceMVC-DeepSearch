@@ -33,5 +33,7 @@ public partial class KhachHang
 
     public virtual ICollection<HoaDon> HoaDons { get; set; } = new List<HoaDon>();
 
+    public virtual ICollection<PasswordResetOtp> PasswordResetOtps { get; set; } = new List<PasswordResetOtp>();
+
     public virtual ICollection<YeuThich> YeuThiches { get; set; } = new List<YeuThich>();
 }

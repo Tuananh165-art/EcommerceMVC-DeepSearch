@@ -17,7 +17,7 @@ namespace ECommerceMVC.ViewModels
         [Display(Name = "Số điện thoại")]
         [Required(ErrorMessage = "Vui lòng nhập số điện thoại")]
         [MaxLength(24, ErrorMessage = "Số điện thoại tối đa 24 ký tự")]
-        [RegularExpression(@"0[9875]\d{8}", ErrorMessage = "Số điện thoại chưa đúng định dạng di động Việt Nam")]
+        [RegularExpression(@"^0\d{9}$", ErrorMessage = "Số điện thoại phải gồm 10 chữ số và bắt đầu bằng số 0")]
         public string DienThoai { get; set; } = string.Empty;
 
         [Display(Name = "Email")]
@@ -31,11 +31,29 @@ namespace ECommerceMVC.ViewModels
         public string DiaChi { get; set; } = string.Empty;
 
         [Display(Name = "Ghi chú")]
-        [MaxLength(200)]
+        [MaxLength(50, ErrorMessage = "Ghi chú tối đa 50 ký tự")]
         public string? GhiChu { get; set; }
 
+        [Display(Name = "Phương thức thanh toán")]
+        [Required(ErrorMessage = "Vui lòng chọn phương thức thanh toán")]
+        [MaxLength(50)]
         public string CachThanhToan { get; set; } = "COD";
         public string CachVanChuyen { get; set; } = "Giao hàng tiêu chuẩn";
         public double PhiVanChuyen { get; set; } = 0;
+        public string? VoucherCode { get; set; }
+        public double DiscountAmount { get; set; }
+    }
+
+    public class CheckoutSuccessVM
+    {
+        public int OrderId { get; set; }
+        public int TotalQuantityPaid { get; set; }
+        public double SubtotalPaid { get; set; }
+        public double ShippingFee { get; set; }
+        public double DiscountAmount { get; set; }
+        public string? VoucherCode { get; set; }
+        public double TotalPaid { get; set; }
+        public string PaymentMethod { get; set; } = string.Empty;
+        public string PaymentStatus { get; set; } = string.Empty;
     }
 }

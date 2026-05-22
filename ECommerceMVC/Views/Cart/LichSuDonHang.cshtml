@@ -1,53 +1,124 @@
 @model IEnumerable<ECommerceMVC.ViewModels.LichSuDonHangItemVM>
 @{
-    ViewData["Title"] = "Lịch sử đơn hàng COD";
+    ViewData["Title"] = "Lịch Sử Đơn Hàng | DEEPSEARCH";
 }
 
-<div class="cart-table-area section-padding-100">
-    <div class="container-fluid">
-        <div class="cart-title mt-50">
-            <h2>Lịch sử đơn hàng COD</h2>
+<div class="order-history-section py-5">
+    <div class="container py-4">
+        <!-- Breadcrumb -->
+        <nav aria-label="breadcrumb" class="mb-5 reveal">
+            <ol class="breadcrumb bg-transparent p-0 m-0">
+                <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index" class="text-secondary hover-primary transition-base">Home</a></li>
+                <li class="breadcrumb-item"><a asp-controller="HangHoa" asp-action="Index" class="text-secondary hover-primary transition-base">Shop</a></li>
+                <li class="breadcrumb-item active text-primary font-weight-semibold" aria-current="page">Lịch sử đơn hàng</li>
+            </ol>
+        </nav>
+
+        <div class="d-flex align-items-center justify-content-between mb-4 reveal">
+            <h2 class="font-heading text-3xl mb-0">Lịch sử đơn hàng</h2>
+            <span class="badge bg-secondary-light text-primary px-3 py-2 rounded-pill font-weight-semibold">
+                Tổng cộng: @Model.Count() đơn
+            </span>
         </div>
 
-        <div class="cart-table clearfix">
-            <table class="table table-responsive">
-                <thead>
-                    <tr>
-                        <th>Mã đơn</th>
-                        <th>Ngày đặt</th>
-                        <th>Trạng thái</th>
-                        <th>Thanh toán</th>
-                        <th>Số lượng</th>
-                        <th>Tổng tiền</th>
-                        <th></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @if (Model.Any())
-                    {
+        <div class="row g-4">
+            <!-- Orders List (Left) -->
+            <div class="col-12 col-lg-8 reveal-left">
+                @if (Model != null && Model.Any())
+                {
+                    <div class="d-flex flex-column gap-3">
                         @foreach (var item in Model)
                         {
-                            <tr>
-                                <td>#@item.MaHd</td>
-                                <td>@item.NgayDat.ToString("dd/MM/yyyy HH:mm")</td>
-                                <td>@item.TrangThai</td>
-                                <td>@item.CachThanhToan</td>
-                                <td>@item.TongSoLuong</td>
-                                <td>$@item.TongTien</td>
-                                <td>
-                                    <a asp-action="ChiTietDonHang" asp-route-id="@item.MaHd" class="btn btn-sm amado-btn">Chi tiết</a>
-                                </td>
-                            </tr>
+                            <!-- Determine dynamic status color -->
+                            var badgeClass = "bg-secondary-light text-secondary";
+                            var iconName = "clock";
+                            
+                            if (item.TrangThai?.Contains("thành") == true || item.TrangThai?.Contains("thành công") == true || item.TrangThai?.Contains("Giao") == true)
+                            {
+                                badgeClass = "bg-success-light text-success";
+                                iconName = "check-circle";
+                            }
+                            else if (item.TrangThai?.Contains("toán") == true || item.TrangThai?.Contains("duyệt") == true)
+                            {
+                                badgeClass = "bg-info-light text-info";
+                                iconName = "credit-card";
+                            }
+                            else if (item.TrangThai?.Contains("hủy") == true)
+                            {
+                                badgeClass = "bg-danger-light text-danger";
+                                iconName = "x";
+                            }
+                            else
+                            {
+                                badgeClass = "bg-warning-light text-warning";
+                                iconName = "clock";
+                            }
+
+                            <div class="glass-card p-4 transition-base hover-shadow-md" style="border-radius: var(--radius-lg);">
+                                <div class="row align-items-center g-3">
+                                    
+                                    <!-- Order Info -->
+                                    <div class="col-12 col-sm-6">
+                                        <div class="d-flex align-items-center gap-2 mb-1">
+                                            <span class="text-gradient font-heading text-base font-weight-bold">Đơn hàng #@item.MaHd</span>
+                                            <span class="badge @badgeClass px-2.5 py-1 text-xs d-inline-flex align-items-center gap-1 font-weight-semibold" style="border-radius: var(--radius-full);">
+                                                <i data-icon="@iconName" data-size="12px"></i> @item.TrangThai
+                                            </span>
+                                        </div>
+                                        <div class="text-tertiary text-xs">
+                                            <i data-icon="clock" data-size="12px" class="me-1"></i> Ngày đặt: @item.NgayDat.ToString("dd/MM/yyyy HH:mm")
+                                        </div>
+                                    </div>
+
+                                    <!-- Price / Total -->
+                                    <div class="col-6 col-sm-3 text-sm-center">
+                                        <span class="text-secondary text-xs d-block mb-1">Tổng tiền</span>
+                                        <span class="text-primary font-weight-bold">@($"{item.TongTien:N0} VND")</span>
+                                    </div>
+
+                                    <!-- Actions Link -->
+                                    <div class="col-6 col-sm-3 text-end">
+                                        <a asp-action="ChiTietDonHang" asp-route-id="@item.MaHd" class="btn btn-outline-modern px-3 py-2 text-xs d-inline-flex align-items-center gap-1.5" style="border-radius: var(--radius-md);">
+                                            Chi tiết <i data-icon="chevron-right" data-size="12px"></i>
+                                        </a>
+                                    </div>
+
+                                </div>
+                            </div>
                         }
-                    }
-                    else
-                    {
-                        <tr>
-                            <td colspan="7">Chưa có đơn COD nào.</td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
+                    </div>
+                }
+                else
+                {
+                    <div class="text-center py-5 glass-card" style="border-radius: var(--radius-xl);">
+                        <i data-icon="package" data-size="48px" class="text-tertiary mb-3"></i>
+                        <h4 class="font-heading text-lg mb-2">Chưa có đơn hàng nào</h4>
+                        <p class="text-secondary mb-0">Bạn chưa thực hiện bất kỳ giao dịch mua sắm nào.</p>
+                    </div>
+                }
+            </div>
+
+            <!-- Sidebar Info (Right) -->
+            <div class="col-12 col-lg-4 reveal-right">
+                <div class="glass-card p-4 position-sticky" style="border-radius: var(--radius-xl); top: calc(var(--navbar-height) + 20px);">
+                    <h4 class="font-heading text-xl mb-4 border-bottom border-color pb-3">Hoạt động mua sắm</h4>
+                    
+                    <div class="d-flex flex-column gap-3 mb-4">
+                        <div class="d-flex justify-content-between align-items-center text-sm">
+                            <span class="text-secondary">Tổng số đơn hàng</span>
+                            <strong class="text-primary">@((Model?.Count() ?? 0)) đơn</strong>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center text-sm">
+                            <span class="text-secondary">Trạng thái tài khoản</span>
+                            <span class="text-success font-weight-semibold">Hoạt động</span>
+                        </div>
+                    </div>
+
+                    <a asp-controller="HangHoa" asp-action="Index" class="btn btn-gradient w-100 py-3 d-flex align-items-center justify-content-center gap-2" style="border-radius: var(--radius-md);">
+                        <i data-icon="shopping-bag" data-size="18px"></i> Tiếp tục mua hàng
+                    </a>
+                </div>
+            </div>
         </div>
     </div>
 </div>

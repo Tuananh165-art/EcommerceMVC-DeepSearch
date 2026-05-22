@@ -1,32 +1,38 @@
-﻿
+
 @{
-    ViewData["Title"] = "Page Not Found";
+    ViewData["Title"] = "Không Tìm Thấy Trang | DEEPSEARCH";
 }
 
-<!-- Single Page Header start -->
-<div class="container-fluid page-header py-5">
-    <h1 class="text-center text-white display-6">404 Error</h1>
-    <ol class="breadcrumb justify-content-center mb-0">
-        <li class="breadcrumb-item"><a href="/">Home</a></li>
-        <li class="breadcrumb-item"><a href="#">Pages</a></li>
-        <li class="breadcrumb-item active text-white">404</li>
-    </ol>
-</div>
-<!-- Single Page Header End -->
+<div class="container-modern section-padding text-center d-flex flex-column align-items-center justify-content-center" style="min-height: 70vh;">
+    <!-- Large animated 404 text with gradient -->
+    <div class="reveal-scale mb-4">
+        <h1 class="display-1" style="font-size: 8rem; font-weight: 800; background: var(--accent-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; filter: drop-shadow(var(--shadow-glow)); margin: 0;">404</h1>
+    </div>
 
-<!-- 404 Start -->
-<div class="container-fluid py-5">
-    <div class="container py-5 text-center">
-        <div class="row justify-content-center">
-            <div class="col-lg-6">
-                <i class="bi bi-exclamation-triangle display-1 text-secondary"></i>
-                <h1 class="display-1">404</h1>
-                <h1 class="mb-4">Page Not Found</h1>
-                <h3 class="mb-4 danger">@TempData["Message"]</h3>
-                <p class="mb-4">We’re sorry, the page you have looked for does not exist in our website! Maybe go to our home page or try to use a search?</p>
-                <a class="btn border-secondary rounded-pill py-3 px-5" href="/">Go Back To Home</a>
+    <!-- Error info card -->
+    <div class="glass-card reveal" style="max-width: 540px; margin: 0 auto;">
+        <h2 class="mb-3" style="font-size: var(--text-2xl);">Đường dẫn không tồn tại</h2>
+        
+        @if (TempData["Message"] != null)
+        {
+            <div class="mb-4">
+                <span class="badge bg-danger-subtle text-danger py-2 px-3 rounded-pill" style="font-size: var(--text-xs); font-weight: 600; border: 1px solid var(--accent-danger);">
+                    @TempData["Message"]
+                </span>
             </div>
+        }
+
+        <p class="text-secondary mb-5" style="line-height: 1.7;">
+            Rất tiếc, trang bạn đang tìm kiếm không tồn tại hoặc đã bị di chuyển sang địa chỉ mới. Vui lòng quay trở về trang chủ hoặc tìm kiếm sản phẩm khác.
+        </p>
+
+        <div class="d-flex justify-content-center gap-3 flex-wrap">
+            <a href="/" class="btn-modern btn-primary-modern rounded-pill px-4">
+                <i data-icon="home" data-size="16px"></i> Quay Về Trang Chủ
+            </a>
+            <button class="btn-modern btn-secondary-modern rounded-pill px-4" data-open-search>
+                <i data-icon="search" data-size="16px"></i> Tìm Sản Phẩm
+            </button>
         </div>
     </div>
-</div>
-<!-- 404 End -->
+</div>

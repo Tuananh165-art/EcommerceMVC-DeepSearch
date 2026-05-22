@@ -1,0 +1,60 @@
+﻿@model List<AdminProductRowVM>
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Quản lý sản phẩm";
+}
+
+<div class="admin-card">
+    <form method="get" class="row g-2 align-items-end">
+        <div class="col-md-3"><label class="form-label">Tìm tên / SKU / NCC</label><input class="form-control" name="q" value="@ViewBag.Query" /></div>
+        <div class="col-md-3"><label class="form-label">Danh mục</label><select class="form-select" name="category" asp-items="ViewBag.Categories"><option value="">Tất cả</option></select></div>
+        <div class="col-md-2"><label class="form-label">Tồn kho</label><select class="form-select" name="stock"><option value="">Tất cả</option><option value="low" selected="@(ViewBag.Stock == "low")">Sắp hết</option><option value="out" selected="@(ViewBag.Stock == "out")">Hết hàng</option></select></div>
+        <div class="col-md-2"><label class="form-label">Hiển thị</label><select class="form-select" name="visible"><option value="">Tất cả</option><option value="true" selected="@(ViewBag.Visible == "true")">Đang hiển thị</option><option value="false" selected="@(ViewBag.Visible == "false")">Đang ẩn</option></select></div>
+        <div class="col-md-2 d-flex gap-2">
+            <button class="btn btn-primary">Lọc</button>
+            <a class="btn btn-admin-soft" asp-action="Products">Đặt lại</a>
+            <a class="btn btn-success" asp-action="ProductCreate">+ Thêm</a>
+        </div>
+    </form>
+</div>
+
+<div class="admin-card">
+    <div class="table-responsive admin-table-wrap" style="max-height:62vh;">
+        <table class="table table-admin table-hover align-middle">
+            <thead>
+                <tr><th>Ảnh</th><th>Sản phẩm</th><th>Danh mục/NCC</th><th>SKU</th><th>Giá</th><th>Tồn</th><th>Biến thể</th><th>Hiển thị</th><th></th></tr>
+            </thead>
+            <tbody>
+            @foreach (var p in Model)
+            {
+                <tr>
+                    <td><img class="product-thumb" src="@MyUtil.GetHangHoaImageUrl(p.Hinh, p.MaHh)" /></td>
+                    <td>
+                        <b>@p.TenHh</b>
+                        <div class="small text-muted">@p.ShortDescription</div>
+                        <div class="small">Đã bán: @p.Sold | DT: @p.Revenue.ToString("N0") đ</div>
+                    </td>
+                    <td>@p.CategoryName<div class="small text-muted">@p.SupplierName</div></td>
+                    <td>@p.TenAlias</td>
+                    <td>@p.Price.ToString("N0") đ</td>
+                    <td>
+                        <span class="badge @(p.IsOutOfStock ? "bg-danger" : p.IsLowStock ? "bg-warning text-dark" : "bg-success")">@p.Stock</span>
+                        <div class="small text-muted">Ngưỡng: @p.LowStockThreshold</div>
+                    </td>
+                    <td><span class="small">Màu: @p.MauSac<br/>Size: @p.KichThuoc<br/>Chất liệu: @p.ChatLieu</span></td>
+                    <td><span class="badge @(p.IsVisible ? "bg-success" : "bg-secondary")">@(p.IsVisible ? "Hiện" : "Ẩn")</span></td>
+                    <td class="text-end">
+                        <a class="btn btn-sm btn-outline-primary" asp-action="ProductEdit" asp-route-id="@p.MaHh">Sửa</a>
+                        <form asp-action="ProductToggleVisible" asp-route-id="@p.MaHh" method="post" class="d-inline">
+                            <button class="btn btn-sm btn-admin-soft">Ẩn/hiện</button>
+                        </form>
+                        <form asp-action="ProductDelete" asp-route-id="@p.MaHh" method="post" class="d-inline" onsubmit="return confirm('Xóa sản phẩm này?')">
+                            <button class="btn btn-sm btn-admin-danger">Xóa</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</div>

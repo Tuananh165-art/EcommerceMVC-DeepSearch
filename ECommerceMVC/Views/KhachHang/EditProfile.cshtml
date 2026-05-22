@@ -1,0 +1,374 @@
+@model ECommerceMVC.ViewModels.EditProfileVM
+@{
+    ViewData["Title"] = "Hồ sơ cá nhân | DEEPSEARCH";
+    var avatarInitial = string.IsNullOrWhiteSpace(Model.HoTen) ? "U" : Model.HoTen.Trim()[0].ToString().ToUpperInvariant();
+}
+
+<style>
+    .profile-section {
+        min-height: calc(100vh - var(--navbar-height));
+        background:
+            radial-gradient(circle at 10% 10%, rgba(215, 182, 143, 0.32), transparent 28%),
+            radial-gradient(circle at 90% 15%, rgba(196, 153, 107, 0.22), transparent 24%),
+            linear-gradient(180deg, #faf4ea 0%, #efe4d3 50%, #f8f2e9 100%);
+    }
+
+    .profile-shell {
+        border: 1px solid rgba(120, 84, 53, 0.14);
+        border-radius: 24px;
+        background: rgba(255, 252, 248, 0.86);
+        box-shadow: 0 24px 60px rgba(89, 57, 34, 0.14);
+        backdrop-filter: blur(10px);
+    }
+
+    .profile-banner {
+        height: 132px;
+        border-radius: 24px 24px 0 0;
+        background: radial-gradient(circle at 18% 22%, rgba(240, 210, 168, 0.35), transparent 48%),
+                    linear-gradient(135deg, #2a211e 0%, #7b5236 45%, #d7b48a 100%);
+    }
+
+    .avatar-wrapper:hover #avatarPreview {
+        transform: scale(1.03);
+    }
+
+    .avatar-wrapper:hover .avatar-hover-overlay {
+        opacity: 1 !important;
+    }
+
+    .avatar-hover-overlay {
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        pointer-events: none;
+        background: rgba(28, 21, 16, 0.55);
+        backdrop-filter: blur(2px);
+    }
+
+    .avatar-fallback {
+        width: 130px;
+        height: 130px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        font-weight: 700;
+        color: #fff;
+        background: linear-gradient(140deg, #8d5f3f, #d5b086);
+        border: 4px solid #fff;
+        box-shadow: 0 12px 28px rgba(88, 56, 31, 0.25);
+    }
+
+    .profile-nav-link {
+        display: flex;
+        align-items: center;
+        gap: var(--space-3);
+        padding: var(--space-3) var(--space-4);
+        color: var(--text-secondary);
+        border-radius: var(--radius-md);
+        text-decoration: none;
+        transition: all var(--transition-fast);
+        font-weight: 500;
+        border: 1px solid transparent;
+    }
+
+    .profile-nav-link:hover {
+        background: rgba(184, 134, 86, 0.12);
+        color: #7b5236;
+        transform: translateX(4px);
+    }
+
+    .profile-nav-link.active {
+        background: linear-gradient(120deg, #9d6b47, #d2b48c);
+        color: #fff !important;
+        box-shadow: 0 10px 24px rgba(122, 80, 47, 0.24);
+    }
+
+    .input-group-modern {
+        border-radius: var(--radius-md) !important;
+        overflow: hidden;
+        border: 1.5px solid rgba(128, 93, 62, 0.2);
+        background: #fffdfa;
+        transition: all var(--transition-fast);
+    }
+
+    .input-group-modern:focus-within {
+        border-color: #b88656;
+        box-shadow: 0 0 0 3px rgba(184, 134, 86, 0.18);
+    }
+
+    .input-group-modern .input-group-text {
+        background: transparent;
+        border: none;
+        color: var(--text-secondary);
+        padding-left: var(--space-4);
+        padding-right: var(--space-2);
+    }
+
+    .input-group-modern .form-control {
+        border: none !important;
+        background: transparent !important;
+        box-shadow: none !important;
+        padding-top: var(--space-3);
+        padding-bottom: var(--space-3);
+        color: var(--text-primary);
+    }
+
+    .input-group-modern .form-control:focus {
+        background: transparent !important;
+    }
+</style>
+
+<div class="profile-section py-5">
+    <div class="container py-4">
+        <nav aria-label="breadcrumb" class="mb-4 reveal">
+            <ol class="breadcrumb mb-0" style="background: transparent; padding: 0;">
+                <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index" class="text-secondary hover-primary text-sm text-decoration-none">Trang chủ</a></li>
+                <li class="breadcrumb-item active text-primary text-sm font-weight-semibold" aria-current="page">Tài khoản của tôi</li>
+            </ol>
+        </nav>
+
+        <div class="row g-4 justify-content-center">
+            <div class="col-12 col-lg-4 reveal">
+                <div class="profile-shell p-0 overflow-hidden">
+                    <div class="profile-banner"></div>
+                    <div class="text-center px-4 pb-4" style="margin-top: -70px;">
+                        <div class="avatar-wrapper position-relative mx-auto mb-3 shadow-lg" style="width: 130px; height: 130px; border-radius: var(--radius-full); cursor: pointer;" id="avatarContainer">
+                            <img id="avatarPreview"
+                                 src="@Model.HinhUrl"
+                                 alt="@Model.HoTen"
+                                 class="rounded-circle border border-4 border-white img-fluid"
+                                 style="width: 130px; height: 130px; object-fit: cover; transition: all var(--transition-base);"
+                                 onerror="this.onerror=null;this.src='/Hinh/KhachHang/default-avatar.svg';" />
+                            <div id="avatarFallback" class="avatar-fallback position-absolute top-0 start-0" style="display:none;">@avatarInitial</div>
+                            <div id="avatarHoverOverlay" class="avatar-hover-overlay position-absolute rounded-circle d-flex flex-column align-items-center justify-content-center text-white opacity-0 transition-base" style="transition: all var(--transition-base);">
+                                <i data-icon="camera" data-size="20px" class="mb-1"></i>
+                                <span style="font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Cập nhật ảnh</span>
+                            </div>
+                        </div>
+
+                        <h3 class="font-heading font-weight-bold text-lg mb-1 text-primary">@Model.HoTen</h3>
+                        <p class="text-secondary text-sm mb-3">@Model.MaKh</p>
+
+                        <div class="d-flex justify-content-center gap-2 mb-4">
+                            <span class="badge bg-secondary-modern text-primary text-xs px-3 py-2" style="border-radius: var(--radius-full); border: 1px solid var(--border-color);">Thành viên</span>
+                            <span class="badge bg-success-light text-success text-xs px-3 py-2" style="border-radius: var(--radius-full);">Đã xác thực</span>
+                        </div>
+
+                        <hr class="my-4" style="border-color: var(--border-color);" />
+
+                        <div class="d-flex flex-column gap-2 text-start">
+                            <a href="#" class="profile-nav-link active">
+                                <i data-icon="user" data-size="18px"></i>
+                                <span>Thông tin tài khoản</span>
+                            </a>
+                            <a asp-controller="Cart" asp-action="LichSuDonHang" class="profile-nav-link">
+                                <i data-icon="clock" data-size="18px"></i>
+                                <span>Lịch sử mua hàng</span>
+                            </a>
+                            <form asp-controller="KhachHang" asp-action="DangXuat" method="post" class="mt-2" onsubmit="return confirm('Bạn có chắc chắn muốn đăng xuất không?');">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="profile-nav-link text-danger-modern w-100 bg-transparent">
+                                    <i data-icon="log-out" data-size="18px"></i>
+                                    <span>Đăng xuất</span>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 col-lg-8 reveal">
+                <div class="profile-shell p-4 p-md-5">
+                    <div class="form-header mb-4">
+                        <h2 class="font-heading text-2xl mb-1 text-primary">Thông tin cá nhân</h2>
+                        <p class="text-secondary text-sm">Quản lý và cập nhật thông tin cá nhân của bạn để mua sắm thuận tiện hơn</p>
+                    </div>
+
+                    <form asp-action="EditProfile" method="post" enctype="multipart/form-data" class="needs-validation">
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger border-0 text-sm p-3 mb-4" style="border-radius: var(--radius-md);"></div>
+                        <input type="hidden" asp-for="Hinh" />
+
+                        <div class="row g-3">
+                            <div class="col-12 col-md-6">
+                                <label class="form-label text-xs text-secondary font-weight-semibold">Tên đăng nhập</label>
+                                <div class="input-group input-group-modern">
+                                    <span class="input-group-text"><i data-icon="user" data-size="16px"></i></span>
+                                    <input asp-for="MaKh" class="form-control" readonly style="opacity: 0.7; cursor: not-allowed;" />
+                                </div>
+                            </div>
+
+                            <div class="col-12 col-md-6">
+                                <label asp-for="HoTen" class="form-label text-xs text-secondary font-weight-semibold">Họ và tên</label>
+                                <div class="input-group input-group-modern">
+                                    <span class="input-group-text"><i data-icon="edit" data-size="16px"></i></span>
+                                    <input asp-for="HoTen" class="form-control" required />
+                                </div>
+                                <span asp-validation-for="HoTen" class="text-danger text-xs mt-1 d-block"></span>
+                            </div>
+
+                            <div class="col-12 col-md-6">
+                                <label asp-for="Email" class="form-label text-xs text-secondary font-weight-semibold">Địa chỉ Email</label>
+                                <div class="input-group input-group-modern">
+                                    <span class="input-group-text"><i data-icon="mail" data-size="16px"></i></span>
+                                    <input asp-for="Email" type="email" class="form-control" required />
+                                </div>
+                                <span asp-validation-for="Email" class="text-danger text-xs mt-1 d-block"></span>
+                            </div>
+
+                            <div class="col-12 col-md-6">
+                                <label asp-for="DienThoai" class="form-label text-xs text-secondary font-weight-semibold">Số điện thoại</label>
+                                <div class="input-group input-group-modern">
+                                    <span class="input-group-text"><i data-icon="phone" data-size="16px"></i></span>
+                                    <input asp-for="DienThoai" type="tel" class="form-control" required />
+                                </div>
+                                <span asp-validation-for="DienThoai" class="text-danger text-xs mt-1 d-block"></span>
+                            </div>
+
+                            <div class="col-12 col-md-6">
+                                <label asp-for="NgaySinh" class="form-label text-xs text-secondary font-weight-semibold">Ngày sinh</label>
+                                <div class="input-group input-group-modern">
+                                    <span class="input-group-text"><i data-icon="calendar" data-size="16px"></i></span>
+                                    <input asp-for="NgaySinh" type="date" class="form-control" />
+                                </div>
+                                <span asp-validation-for="NgaySinh" class="text-danger text-xs mt-1 d-block"></span>
+                            </div>
+
+                            <div class="col-12 col-md-6 d-flex align-items-center mt-3 mt-md-4 pt-1">
+                                <div class="form-check form-switch d-flex align-items-center gap-2">
+                                    <input asp-for="GioiTinh" class="form-check-input accent-primary cursor-pointer" type="checkbox" style="width: 40px; height: 20px;" id="genderSwitch" />
+                                    <label class="form-check-label text-sm text-secondary cursor-pointer mb-0" for="genderSwitch" id="genderLabel">Giới tính: Nam</label>
+                                </div>
+                            </div>
+
+                            <div class="col-12">
+                                <label asp-for="DiaChi" class="form-label text-xs text-secondary font-weight-semibold">Địa chỉ giao hàng mặc định</label>
+                                <div class="input-group input-group-modern">
+                                    <span class="input-group-text"><i data-icon="map-pin" data-size="16px"></i></span>
+                                    <input asp-for="DiaChi" class="form-control" required />
+                                </div>
+                                <span asp-validation-for="DiaChi" class="text-danger text-xs mt-1 d-block"></span>
+                            </div>
+                        </div>
+
+                        <div class="d-flex flex-column flex-sm-row gap-3 mt-5">
+                            <button type="submit" class="btn btn-modern btn-primary-modern flex-grow-1 py-3 d-flex align-items-center justify-content-center gap-2" data-click-notify="Đang lưu thay đổi...">
+                                <i data-icon="save" data-size="16px"></i> Lưu thay đổi
+                            </button>
+                            <a asp-controller="Home" asp-action="Index" class="btn btn-modern btn-secondary-modern py-3 px-4 d-flex align-items-center justify-content-center gap-2 text-decoration-none">
+                                Quay lại trang chủ
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@* Dedicated hidden form for avatar upload - has its own AntiForgeryToken *@
+<form id="avatarUploadForm"
+      action="/KhachHang/UploadAvatar"
+      method="post"
+      enctype="multipart/form-data"
+      style="position:absolute;left:-9999px;top:-9999px;width:1px;height:1px;overflow:hidden;">
+    @Html.AntiForgeryToken()
+    <input type="file" id="hinhUpload" name="avatarFile" accept="image/jpeg,image/png,image/webp,image/gif" />
+</form>
+
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var avatarContainer = document.getElementById('avatarContainer');
+            var fileInput       = document.getElementById('hinhUpload');
+            var avatarPreview   = document.getElementById('avatarPreview');
+            var overlay         = document.getElementById('avatarHoverOverlay');
+            var avatarForm      = document.getElementById('avatarUploadForm');
+
+            if (avatarContainer && fileInput && avatarForm) {
+                avatarContainer.addEventListener('click', function () {
+                    fileInput.click();
+                });
+
+                fileInput.addEventListener('change', function () {
+                    var file = fileInput.files[0];
+                    if (!file) return;
+
+                    // Show spinner
+                    if (overlay) {
+                        overlay.querySelector('span') && (overlay.querySelector('span').textContent = 'Đang tải...');
+                        overlay.style.opacity = '1';
+                    }
+                    avatarContainer.style.pointerEvents = 'none';
+
+                    var formData = new FormData(avatarForm);
+
+                    fetch('/KhachHang/UploadAvatar', {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(function (res) {
+                        return res.json();
+                    })
+                    .then(function (data) {
+                        if (data.success) {
+                            var newUrl = data.url + '?t=' + Date.now();
+                            avatarPreview.src = newUrl;
+                            avatarPreview.style.display = 'block';
+
+                            // Dynamically update the header and menu avatars as well
+                            var navbarAvatars = document.querySelectorAll('.navbar-account-avatar, .navbar-account-summary-avatar');
+                            navbarAvatars.forEach(function (el) {
+                                if (el.tagName.toLowerCase() === 'img') {
+                                    el.src = newUrl;
+                                } else {
+                                    var img = document.createElement('img');
+                                    img.src = newUrl;
+                                    img.alt = el.getAttribute('aria-label') || '';
+                                    img.className = el.className.replace('navbar-account-avatar-fallback', '').replace('is-visible', '');
+                                    img.style.objectFit = 'cover';
+                                    el.parentNode.replaceChild(img, el);
+                                }
+                            });
+
+                            if (window.customerNotify) window.customerNotify(data.message, 'success');
+                        } else {
+                            if (window.customerNotify) window.customerNotify(data.message || 'Upload thất bại.', 'error');
+                        }
+                    })
+                    .catch(function () {
+                        if (window.customerNotify) window.customerNotify('Lỗi kết nối. Vui lòng thử lại.', 'error');
+                    })
+                    .finally(function () {
+                        if (overlay) {
+                            var sp = overlay.querySelector('span');
+                            if (sp) sp.textContent = 'Cập nhật ảnh';
+                            overlay.style.opacity = '';
+                        }
+                        avatarContainer.style.pointerEvents = '';
+                        fileInput.value = '';
+                    });
+                });
+            }
+
+            // Gender label
+            var genderSwitch = document.getElementById('genderSwitch');
+            var genderLabel  = document.getElementById('genderLabel');
+            if (genderSwitch && genderLabel) {
+                function updateGenderLabel() {
+                    genderLabel.textContent = genderSwitch.checked ? 'Giới tính: Nam' : 'Giới tính: Nữ';
+                }
+                genderSwitch.addEventListener('change', updateGenderLabel);
+                updateGenderLabel();
+            }
+        });
+    </script>
+    <style>
+        @@keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+}
+

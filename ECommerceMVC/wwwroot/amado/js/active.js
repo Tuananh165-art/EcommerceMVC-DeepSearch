@@ -56,15 +56,15 @@
     // :: 4.0 Sticky Active Code
     $window.on('scroll', function () {
         if ($window.scrollTop() > 0) {
-            $('.header_area').addClass('sticky');
+            $('.header-area').addClass('sticky');
         } else {
-            $('.header_area').removeClass('sticky');
+            $('.header-area').removeClass('sticky');
         }
     });
 
     // :: 5.0 Nice Select Active Code
     if ($.fn.niceSelect) {
-        $('select').niceSelect();
+        $('select').not('.no-nice-select').niceSelect();
     }
 
     // :: 6.0 Magnific Active Code
@@ -96,24 +96,45 @@
 
     // :: 11.0 Slider Range Price Active Code
     $('.slider-range-price').each(function () {
-        var min = jQuery(this).data('min');
-        var max = jQuery(this).data('max');
-        var unit = jQuery(this).data('unit');
-        var value_min = jQuery(this).data('value-min');
-        var value_max = jQuery(this).data('value-max');
-        var label_result = jQuery(this).data('label-result');
+        var min = Number(jQuery(this).data('min'));
+        var max = Number(jQuery(this).data('max'));
+        var unit = String(jQuery(this).data('unit') || '').trim();
+        var value_min = Number(jQuery(this).data('value-min'));
+        var value_max = Number(jQuery(this).data('value-max'));
         var t = $(this);
+        var form = t.closest('form');
+        var minInput = form.find('input[name="minPrice"]');
+        var maxInput = form.find('input[name="maxPrice"]');
+
+        function formatValue(value) {
+            var number = Number(value);
+            if (unit === 'VND') {
+                return number.toLocaleString('vi-VN') + ' VND';
+            }
+            return unit ? (unit + number) : number.toLocaleString('vi-VN');
+        }
+
+        function updateRange(minValue, maxValue) {
+            t.closest('.slider-range').find('.range-price').html(formatValue(minValue) + ' - ' + formatValue(maxValue));
+            if (minInput.length) {
+                minInput.val(minValue);
+            }
+            if (maxInput.length) {
+                maxInput.val(maxValue);
+            }
+        }
+
         $(this).slider({
             range: true,
             min: min,
             max: max,
             values: [value_min, value_max],
             slide: function (event, ui) {
-                var result = label_result + " " + unit + ui.values[0] + ' - ' + unit + ui.values[1];
-                console.log(t);
-                t.closest('.slider-range').find('.range-price').html(result);
+                updateRange(ui.values[0], ui.values[1]);
             }
         });
+
+        updateRange(value_min, value_max);
     });
 
 })(jQuery);

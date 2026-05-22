@@ -1,30 +1,153 @@
-@model IEnumerable<ECommerceMVC.ViewModels.HangHoaVM>
+﻿@model IEnumerable<ECommerceMVC.ViewModels.HangHoaVM>
+@{
+    var index = 0;
+    string ResolveImageUrl(string? rawUrl)
+    {
+        if (string.IsNullOrWhiteSpace(rawUrl)) return string.Empty;
+        var normalized = rawUrl.Trim().Replace("\\", "/");
+        if (normalized.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ||
+            normalized.StartsWith("https://", StringComparison.OrdinalIgnoreCase) ||
+            normalized.StartsWith("data:", StringComparison.OrdinalIgnoreCase))
+        {
+            return normalized;
+        }
+
+        if (!normalized.StartsWith("/")) normalized = "/" + normalized.TrimStart('~', '/');
+        return normalized;
+    }
+
+    string BuildCollectionSummary(string raw, string category, double price)
+    {
+        if (!string.IsNullOrWhiteSpace(raw) && raw.Trim().Length >= 44)
+        {
+            return raw.Trim();
+        }
+
+        var baseTone = category.ToLowerInvariant() switch
+        {
+            var c when c.Contains("sofa") || c.Contains("lounge") => "Silhouette gọn, đệm êm và chất liệu bền cho lounge hiện đại.",
+            var c when c.Contains("table") || c.Contains("bàn") => "Bề mặt hoàn thiện tinh xảo, tỷ lệ cân đối cho phòng khách sang trọng.",
+            var c when c.Contains("vase") || c.Contains("decor") => "Điểm nhấn décor thủ công, phối màu ấm và dễ kết hợp nhiều bối cảnh.",
+            var c when c.Contains("lamp") || c.Contains("đèn") => "Ánh sáng dịu, thiết kế giàu chi tiết để nâng chiều sâu thị giác.",
+            _ => "Thiết kế cân bằng giữa công năng và thẩm mỹ cho không gian sống cao cấp."
+        };
+
+        var priceTone = price >= 5000000
+            ? "Dòng tuyển chọn cao cấp cho căn hộ, villa và showroom."
+            : "Phù hợp căn hộ thành thị, studio và không gian sống tinh gọn.";
+
+        return $"{baseTone} {priceTone}";
+    }
+}
 
 @foreach (var item in Model)
 {
-    <div class="col-12 col-sm-6 col-md-12 col-xl-6">
-        <div class="single-product-wrapper">
-            <div class="product-img">
-                <img src="~/Hinh/HangHoa/@item.Hinh" alt="@item.TenHH" style="height: 320px; object-fit: cover; width: 100%;" />
+    var category = string.IsNullOrWhiteSpace(item.TenLoai) ? "Nội thất cao cấp" : item.TenLoai;
+    var summary = BuildCollectionSummary(item.MoTaNgan, category, item.DonGia);
+    var hasRating = item.SoDanhGia > 0;
+    var rating = Math.Clamp(item.DiemDanhGia, 0, 5);
+    var quickMeta = index switch
+    {
+        0 => new[] { "Walnut / brass accents", "Giao nhanh 2-4 ngày" },
+        1 => new[] { "Bảo hành 24 tháng", "Showroom trải nghiệm" },
+        2 => new[] { "Phong cách đương đại", "Đóng gói premium" },
+        _ => new[] { "Hoàn thiện thủ công", "Phối hợp nhiều không gian" }
+    };
+
+    var badge = index switch
+    {
+        0 => "Lựa chọn nổi bật",
+        1 => "Bán chạy",
+        2 => "Mới về",
+        _ => "Nổi bật"
+    };
+    var fallbackImageUrl = "/Hinh/HangHoa/lux-modern-dining-area.jpg";
+    var imageUrl = ResolveImageUrl(item.HinhUrl);
+    if (string.IsNullOrWhiteSpace(imageUrl))
+    {
+        imageUrl = fallbackImageUrl;
+    }
+
+    <div class="col-12 col-md-6 col-lg-4 mb-4 stagger-item">
+        <article class="catalog-luxe-card">
+            <div class="catalog-luxe-media is-loading" data-fallback-image="@fallbackImageUrl">
+                <span class="catalog-luxe-badge">@badge</span>
+
+                <a asp-controller="HangHoa" asp-action="Detail" asp-route-id="@item.MaHh" class="catalog-luxe-image-link">
+                    <img src="@imageUrl"
+                         alt="@item.TenHH"
+                         loading="lazy"
+                         decoding="async"
+                         fetchpriority="low"
+                         onload="this.closest('.catalog-luxe-media')?.classList.remove('is-loading');"
+                         onerror="const m=this.closest('.catalog-luxe-media'); if(!m){return;} m.classList.remove('is-loading'); const fb=m.dataset.fallbackImage||'@fallbackImageUrl'; if(this.dataset.fallbackApplied==='1'){m.classList.add('is-image-error'); this.style.display='none'; return;} m.classList.remove('is-image-error'); this.dataset.fallbackApplied='1'; this.src=fb;"
+                         data-fallback-applied="0" />
+                </a>
+                <span class="catalog-luxe-image-state" aria-hidden="true">Không tải được ảnh</span>
+
+                <div class="catalog-luxe-actions">
+                    <form asp-controller="HangHoa" asp-action="@(item.IsFavourite ? "RemoveFavourite" : "AddFavourite")" asp-route-id="@item.MaHh" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="returnUrl" value="@Context.Request.Path@Context.Request.QueryString" />
+                        <button type="submit" class="catalog-luxe-action-btn @(item.IsFavourite ? "active" : string.Empty)" aria-label="Yêu thích" data-click-notify="Đang cập nhật yêu thích...">
+                            <i data-icon="heart" data-size="16px"></i>
+                        </button>
+                    </form>
+
+                    <a asp-controller="HangHoa" asp-action="Detail" asp-route-id="@item.MaHh" class="catalog-luxe-action-btn" aria-label="Xem nhanh">
+                        <i data-icon="eye" data-size="16px"></i>
+                    </a>
+                </div>
             </div>
 
-            <div class="product-description d-flex align-items-center justify-content-between">
-                <div class="product-meta-data">
-                    <div class="line"></div>
-                    <p class="product-price">$@item.DonGia</p>
-                    <a asp-action="Detail" asp-controller="HangHoa" asp-route-id="@item.MaHh">
-                        <h6>@item.TenHH</h6>
-                    </a>
-                    <small>@item.TenLoai</small>
+            <div class="catalog-luxe-content">
+                <div class="catalog-luxe-meta">
+                    <span class="catalog-luxe-category">@category</span>
                 </div>
-                <div class="ratings-cart text-right">
-                    <div class="cart">
-                        <a asp-action="AddToCart" asp-controller="Cart" asp-route-id="@item.MaHh" title="Add to Cart">
-                            <img src="~/amado/img/core-img/cart.png" alt="cart" />
+
+                <h3 class="catalog-luxe-title">
+                    <a asp-controller="HangHoa" asp-action="Detail" asp-route-id="@item.MaHh">@item.TenHH</a>
+                </h3>
+
+                <p class="catalog-luxe-summary">@summary</p>
+
+                <div class="catalog-luxe-highlights" aria-label="Thông tin nổi bật">
+                    <span>@quickMeta[0]</span>
+                    <span>@quickMeta[1]</span>
+                </div>
+
+                <div class="catalog-luxe-footer">
+                    <div class="catalog-luxe-price-block" aria-label="Giá sản phẩm">
+                        <span class="catalog-luxe-price-label">Giá bán</span>
+                        <span class="catalog-luxe-price">@($"{item.DonGia:N0}₫")</span>
+                    </div>
+
+                    <div class="catalog-luxe-rating" aria-label="Đánh giá sản phẩm">
+                        @for (var star = 1; star <= 5; star++)
+                        {
+                            <i data-icon="@(star <= rating ? "star-filled" : "star")" data-size="14px"></i>
+                        }
+                        <span>@(hasRating ? $"{rating}/5 · {item.SoDanhGia} đánh giá" : "Chưa có đánh giá")</span>
+                    </div>
+
+                    <div class="catalog-luxe-footer-actions d-flex gap-2">
+                        <form asp-controller="Cart" asp-action="AddToCart" asp-route-id="@item.MaHh" method="post" class="m-0">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="quantity" value="1" />
+                            <input type="hidden" name="returnUrl" value="@Context.Request.Path@Context.Request.QueryString" />
+                            <button type="submit" class="catalog-luxe-cta" data-click-notify="Đang thêm vào giỏ hàng...">
+                                <i data-icon="shopping-cart" data-size="14px"></i>
+                                Thêm vào giỏ
+                            </button>
+                        </form>
+                        <a asp-controller="HangHoa" asp-action="Detail" asp-route-id="@item.MaHh" class="catalog-luxe-cta catalog-luxe-cta-ghost">
+                            Xem chi tiết
                         </a>
                     </div>
                 </div>
             </div>
-        </div>
+        </article>
     </div>
+
+    index++;
 }

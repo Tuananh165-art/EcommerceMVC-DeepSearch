@@ -1,0 +1,62 @@
+﻿@model List<AdminCategoryRowVM>
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Quản lý danh mục";
+}
+
+<div class="admin-card d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <div><b>Danh mục riêng cho admin:</b> hỗ trợ category/sub-category, sắp xếp, ẩn/hiện. Trạng thái ẩn/hiện được áp dụng vào menu danh mục bên user.</div>
+    <a class="btn btn-success" asp-action="CategoryCreate">+ Thêm danh mục</a>
+</div>
+
+<div class="admin-card">
+    <div class="table-responsive admin-table-wrap" style="max-height:62vh;">
+        <table class="table table-admin table-hover align-middle">
+            <thead>
+                <tr>
+                    <th>Danh mục</th>
+                    <th>Sub của</th>
+                    <th>Sắp xếp</th>
+                    <th>Hiển thị</th>
+                    <th>Sản phẩm</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var c in Model)
+            {
+                <tr>
+                    <td>
+                        <b>@c.TenLoai</b>
+                        <div class="small text-muted">Alias: @c.TenLoaiAlias</div>
+                        <div class="small text-muted">@c.MoTa</div>
+                    </td>
+                    <td>@(c.ParentCategoryName ?? "Danh mục gốc")</td>
+                    <td>
+                        <span class="badge badge-soft">@c.SortOrder</span>
+                        <form method="post" asp-action="CategoryMove" asp-route-id="@c.MaLoai" class="d-inline">
+                            <input type="hidden" name="delta" value="-10" />
+                            <button class="btn btn-sm btn-admin-soft">↑</button>
+                        </form>
+                        <form method="post" asp-action="CategoryMove" asp-route-id="@c.MaLoai" class="d-inline">
+                            <input type="hidden" name="delta" value="10" />
+                            <button class="btn btn-sm btn-admin-soft">↓</button>
+                        </form>
+                    </td>
+                    <td><span class="badge @(c.IsVisible ? "bg-success" : "bg-secondary")">@(c.IsVisible ? "Hiện" : "Ẩn")</span></td>
+                    <td>@c.ProductCount</td>
+                    <td class="text-end">
+                        <a class="btn btn-sm btn-outline-primary" asp-action="CategoryEdit" asp-route-id="@c.MaLoai">Sửa</a>
+                        <form method="post" asp-action="CategoryToggle" asp-route-id="@c.MaLoai" class="d-inline">
+                            <button class="btn btn-sm btn-admin-soft">Ẩn/hiện</button>
+                        </form>
+                        <form method="post" asp-action="CategoryDelete" asp-route-id="@c.MaLoai" class="d-inline" onsubmit="return confirm('Xóa danh mục này?')">
+                            <button class="btn btn-sm btn-admin-danger">Xóa</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</div>

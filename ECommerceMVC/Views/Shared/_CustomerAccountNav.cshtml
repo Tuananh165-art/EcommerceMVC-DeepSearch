@@ -1,0 +1,97 @@
+@using ECommerceMVC.Data
+@using ECommerceMVC.Helpers
+@inject Hshop2023Context Db
+@{
+    var customerId = Context.Session.Get<string>(MySetting.CUSTOMER_KEY);
+    var customer = string.IsNullOrWhiteSpace(customerId)
+        ? null
+        : Db.KhachHangs.FirstOrDefault(x => x.MaKh == customerId);
+
+    var nameParts = (customer?.HoTen ?? string.Empty)
+        .Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+    var initials = nameParts.Length switch
+    {
+        >= 2 => string.Concat(nameParts[0][0], nameParts[^1][0]).ToUpperInvariant(),
+        1 => nameParts[0][0].ToString().ToUpperInvariant(),
+        _ => "U"
+    };
+
+    var avatarUrl = string.Empty;
+    if (customer != null && !string.IsNullOrWhiteSpace(customer.Hinh))
+    {
+        var safeFile = System.IO.Path.GetFileName(customer.Hinh.Trim());
+        var fullPath = System.IO.Path.Combine(System.IO.Directory.GetCurrentDirectory(), "wwwroot", "Hinh", "KhachHang", safeFile);
+        if (System.IO.File.Exists(fullPath))
+        {
+            avatarUrl = $"/Hinh/KhachHang/{safeFile}";
+        }
+    }
+}
+
+@if (customer == null)
+{
+    <div class="navbar-guest-actions">
+        <a asp-controller="KhachHang" asp-action="DangNhap" class="navbar-auth-link">Đăng nhập</a>
+        <a asp-controller="KhachHang" asp-action="DangKy" class="btn-modern btn-primary-modern rounded-pill navbar-register-btn">Đăng ký</a>
+    </div>
+}
+else
+{
+    <div class="dropdown navbar-account-dropdown">
+        <button class="navbar-account-trigger" type="button" id="customerAccountMenu" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Mở menu tài khoản của @customer.HoTen">
+            @if (!string.IsNullOrEmpty(avatarUrl))
+            {
+                <img src="@avatarUrl" alt="@customer.HoTen" class="navbar-account-avatar" style="object-fit: cover;" />
+            }
+            else
+            {
+                <span class="navbar-account-avatar navbar-account-avatar-fallback is-visible" aria-hidden="true">@initials</span>
+            }
+            <span class="navbar-account-copy d-none d-xl-flex">
+                <small>Tài khoản</small>
+                <strong>@customer.HoTen</strong>
+            </span>
+            <i data-icon="chevron-down" data-size="16px" class="d-none d-xl-inline-flex navbar-account-chevron"></i>
+        </button>
+
+        <ul class="dropdown-menu dropdown-menu-end navbar-account-menu" aria-labelledby="customerAccountMenu">
+            <li class="navbar-account-summary">
+                <div class="navbar-account-summary-head">
+                    @if (!string.IsNullOrEmpty(avatarUrl))
+                    {
+                        <img src="@avatarUrl" alt="@customer.HoTen" class="navbar-account-summary-avatar" style="object-fit: cover;" />
+                    }
+                    else
+                    {
+                        <span class="navbar-account-summary-avatar" aria-hidden="true">@initials</span>
+                    }
+                    <div>
+                        <div class="navbar-account-summary-label">Tài khoản</div>
+                        <div class="navbar-account-summary-name">@customer.HoTen</div>
+                    </div>
+                </div>
+            </li>
+            <li>
+                <a class="dropdown-item navbar-account-item" asp-controller="KhachHang" asp-action="EditProfile">
+                    <i data-icon="user" data-size="16px"></i>
+                    Hồ sơ cá nhân
+                </a>
+            </li>
+            <li>
+                <a class="dropdown-item navbar-account-item" asp-controller="Cart" asp-action="LichSuDonHang">
+                    <i data-icon="clipboard" data-size="16px"></i>
+                    Lịch sử đơn hàng
+                </a>
+            </li>
+            <li class="border-top mt-2 pt-2">
+                <form asp-controller="KhachHang" asp-action="DangXuat" method="post">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="dropdown-item navbar-account-item navbar-account-logout">
+                        <i data-icon="log-out" data-size="16px"></i>
+                        Đăng xuất
+                    </button>
+                </form>
+            </li>
+        </ul>
+    </div>
+}

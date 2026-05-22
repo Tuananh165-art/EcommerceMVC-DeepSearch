@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@ViewData["Title"] - Admin DEEPSEARCH</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <style>
+        :root {
+            --admin-bg: #efe4d3; /* Luxury warm beige background */
+            --admin-bg-soft: #fffdfa; /* Warm white/ivory background */
+            --admin-card: rgba(255, 252, 248, 0.94); /* Warm white card with subtle transparency */
+            --admin-text: #2c2119; /* Deep luxury chocolate text */
+            --admin-muted: #7e6958; /* Warm taupe muted text */
+            --admin-border: rgba(120, 84, 53, 0.15); /* Light warm-brown border */
+            --admin-primary: #7b5236; /* Core luxury dark brown */
+            --admin-primary-2: #b88656; /* Core glowing warm gold/amber */
+            --admin-sidebar: #1f1814; /* Deep luxury charcoal-brown sidebar */
+            --admin-sidebar-2: #15100d; /* Even darker charcoal-brown for depth */
+            --admin-sidebar-text: #efe4d3; /* Light beige for sidebar text */
+            --admin-shadow: 0 16px 40px rgba(89, 57, 34, 0.08); /* Subtle warm shadow */
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            color: var(--admin-text);
+            font-family: "Be Vietnam Pro", "Noto Sans", "Segoe UI", Tahoma, Arial, sans-serif;
+            background:
+                radial-gradient(900px 320px at 100% -5%, rgba(215, 182, 143, 0.25), transparent 60%),
+                linear-gradient(180deg, var(--admin-bg-soft), var(--admin-bg));
+            line-height: 1.45;
+        }
+
+        .admin-shell {
+            min-height: 100vh;
+            display: grid;
+            grid-template-columns: 280px minmax(0, 1fr);
+        }
+
+        .admin-sidebar {
+            position: sticky;
+            top: 0;
+            height: 100vh;
+            overflow: auto;
+            padding: 22px 16px;
+            background:
+                radial-gradient(360px 160px at 0 0, rgba(184, 134, 86, 0.25), transparent 68%),
+                linear-gradient(180deg, var(--admin-sidebar), var(--admin-sidebar-2));
+            border-right: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 12px 0 34px rgba(42, 33, 30, 0.25);
+        }
+
+        .admin-brand {
+            color: #fff3e3;
+            font-size: 1.55rem;
+            font-weight: 800;
+            letter-spacing: 0.01em;
+            background: linear-gradient(135deg, #fff3e3, #d7b48a);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .admin-subbrand {
+            color: #bfa895;
+            font-size: 0.88rem;
+            line-height: 1.5;
+            margin: 0.5rem 0 1.2rem;
+        }
+
+        .admin-nav { display: grid; gap: 0.42rem; }
+
+        .admin-nav a {
+            display: flex;
+            align-items: center;
+            gap: 0.55rem;
+            padding: 0.78rem 0.88rem;
+            border-radius: 0.85rem;
+            text-decoration: none;
+            color: var(--admin-sidebar-text);
+            border: 1px solid transparent;
+            transition: all .2s ease;
+            font-weight: 650;
+            overflow-wrap: anywhere;
+        }
+
+        .admin-nav a:hover {
+            color: #ffffff;
+            border-color: rgba(215, 180, 138, 0.3);
+            background: rgba(255, 255, 255, 0.06);
+        }
+
+        .admin-nav a.active {
+            color: #ffffff;
+            border-color: rgba(184, 134, 86, 0.4);
+            background: linear-gradient(135deg, rgba(123, 82, 54, 0.5), rgba(184, 134, 86, 0.3));
+            box-shadow: 0 10px 24px rgba(21, 16, 13, 0.3);
+        }
+
+        .admin-main { min-width: 0; }
+
+        .admin-topbar {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            padding: 0.95rem 1.4rem;
+            border-bottom: 1px solid var(--admin-border);
+            background: rgba(255, 253, 250, 0.92);
+            backdrop-filter: blur(10px);
+        }
+
+        .admin-title-wrap .muted { color: var(--admin-muted); font-size: 0.82rem; }
+
+        .admin-topbar h1 {
+            margin: 0.1rem 0 0;
+            font-size: clamp(1.3rem, 2.4vw, 1.85rem);
+            line-height: 1.2;
+            letter-spacing: -0.02em;
+            word-break: break-word;
+            color: #433327;
+        }
+
+        .admin-user { text-align: right; }
+
+        .admin-content {
+            padding: 1.25rem;
+            min-width: 0;
+        }
+
+        .stat-card, .admin-card {
+            border-radius: 1rem;
+            border: 1px solid var(--admin-border);
+            background: var(--admin-card);
+            backdrop-filter: blur(8px);
+            box-shadow: var(--admin-shadow);
+        }
+
+        .stat-card { padding: 1.05rem; min-height: 112px; }
+
+        .stat-label {
+            color: #7e6958;
+            font-size: 0.76rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            font-weight: 800;
+        }
+
+        .stat-value {
+            margin-top: 0.36rem;
+            font-size: clamp(1.5rem, 2.4vw, 2.1rem);
+            line-height: 1.1;
+            font-weight: 800;
+            color: #433327;
+        }
+
+        .stat-hint { color: var(--admin-muted); font-size: 0.82rem; }
+
+        .admin-card { padding: 1rem; margin-bottom: 1rem; }
+
+        .admin-section-title { margin-bottom: 1rem; font-size: 1.06rem; color: #433327; font-weight: 700; }
+
+        .table-admin { margin-bottom: 0; min-width: 760px; }
+
+        .table-admin th {
+            color: #7e6958;
+            font-size: 0.75rem;
+            letter-spacing: 0.07em;
+            text-transform: uppercase;
+            white-space: nowrap;
+            border-bottom-color: var(--admin-border);
+        }
+
+        .table-admin td, .table-admin th { vertical-align: middle; }
+
+        .table-admin td {
+            color: #433327;
+            overflow-wrap: anywhere;
+        }
+
+        .table-admin tbody tr td { padding-top: .62rem; padding-bottom: .62rem; }
+
+        .admin-table-wrap {
+            border: 1px solid var(--admin-border);
+            border-radius: 0.85rem;
+            overflow: auto;
+        }
+
+        .admin-table-wrap thead th {
+            position: sticky;
+            top: 0;
+            background: rgba(255, 253, 250, .98);
+            z-index: 2;
+        }
+
+        .product-thumb {
+            width: 56px;
+            height: 56px;
+            object-fit: contain;
+            background: #fffdfa;
+            border-radius: 0.8rem;
+            border: 1px solid var(--admin-border);
+            display: block;
+        }
+
+        .badge-soft {
+            background: rgba(184, 134, 86, 0.12);
+            color: #7b5236;
+            border: 1px solid rgba(184, 134, 86, 0.22);
+        }
+
+        .form-control, .form-select {
+            border-radius: 0.68rem;
+            border-color: var(--admin-border);
+            min-height: 40px;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: rgba(184, 134, 86, 0.45);
+            box-shadow: 0 0 0 .2rem rgba(184, 134, 86, 0.14);
+        }
+
+        .btn {
+            border-radius: 0.68rem;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .btn-primary {
+            border-color: #7b5236;
+            background: linear-gradient(135deg, var(--admin-primary), var(--admin-primary-2));
+            color: #fff;
+        }
+
+        .btn-primary:hover {
+            border-color: #5f3f29;
+            background: linear-gradient(135deg, #5f3f29, #9c6e43);
+            color: #fff;
+        }
+
+        .btn-admin-soft {
+            background: #fff;
+            border: 1px solid #c8d8ef;
+            color: #35516f;
+        }
+
+        .btn-admin-soft:hover {
+            background: #f5faff;
+            border-color: #9fc1ec;
+            color: #1f3850;
+        }
+
+        .btn-admin-danger {
+            background: #fff;
+            border: 1px solid #efb7b7;
+            color: #b74040;
+        }
+
+        .btn-admin-danger:hover {
+            background: #fff3f3;
+            border-color: #dd8e8e;
+            color: #9f2f2f;
+        }
+
+        .status-chip {
+            display: inline-block;
+            border-radius: 999px;
+            padding: .22rem .58rem;
+            font-size: .78rem;
+            font-weight: 700;
+            border: 1px solid transparent;
+            white-space: nowrap;
+        }
+
+        .status-pending { background: #fff7eb; border-color: #f0d6aa; color: #975c13; }
+        .status-success { background: #eaf8ef; border-color: #b2e1c1; color: #19794b; }
+        .status-failed { background: #fff0f0; border-color: #e8bbbb; color: #b13f3f; }
+        .status-info { background: #edf5ff; border-color: #bdd7fb; color: #1f67b3; }
+
+        .admin-menu-toggle {
+            display: none;
+            border: 1px solid #b9cce6;
+            background: #fff;
+            color: #27425f;
+            border-radius: 0.6rem;
+            padding: 0.4rem 0.68rem;
+            font-weight: 700;
+        }
+
+        @@media (max-width: 1100px) {
+            .admin-shell { grid-template-columns: 1fr; }
+
+            .admin-sidebar {
+                position: fixed;
+                inset: 0 auto 0 0;
+                width: min(78vw, 320px);
+                transform: translateX(-100%);
+                transition: transform .25s ease;
+                z-index: 1000;
+            }
+
+            body.admin-sidebar-open .admin-sidebar { transform: translateX(0); }
+
+            .admin-topbar { padding: 0.85rem 1rem; }
+            .admin-content { padding: 1rem; }
+            .admin-user { display: none; }
+            .admin-menu-toggle { display: inline-block; }
+        }
+
+        @@media (max-width: 767px) {
+            .admin-content { padding: 0.8rem; }
+            .admin-card { padding: 0.82rem; }
+            .stat-card { min-height: 98px; }
+            .btn { padding-left: .62rem; padding-right: .62rem; }
+        }
+    </style>
+    @RenderSection("Styles", required: false)
+</head>
+<body>
+@{
+    var action = (ViewContext.RouteData.Values["action"]?.ToString() ?? "Index");
+    string active(params string[] names) => names.Contains(action) ? "active" : string.Empty;
+}
+<div class="admin-shell">
+    <aside class="admin-sidebar" id="adminSidebar">
+        <div class="admin-brand">DEEPSEARCH Admin</div>
+        <div class="admin-subbrand">Không gian quản trị tách biệt hoàn toàn với giao diện khách hàng.</div>
+        <nav class="admin-nav">
+            <a class="@active("Index")" asp-controller="Admin" asp-action="Index">Bảng điều khiển</a>
+            <a class="@active("Products","ProductCreate","ProductEdit")" asp-controller="Admin" asp-action="Products">Sản phẩm</a>
+            <a class="@active("Categories","CategoryCreate","CategoryEdit")" asp-controller="Admin" asp-action="Categories">Danh mục</a>
+            <a class="@active("Orders","OrderDetails")" asp-controller="Admin" asp-action="Orders">Đơn hàng</a>
+            <a class="@active("Customers","CustomerDetails")" asp-controller="Admin" asp-action="Customers">Khách hàng</a>
+            <a class="@active("Payments")" asp-controller="Admin" asp-action="Payments">Thanh toán</a>
+            <a asp-controller="HangHoa" asp-action="Index">Về trang khách hàng</a>
+        </nav>
+    </aside>
+
+    <section class="admin-main">
+        <header class="admin-topbar">
+            <div class="d-flex align-items-start gap-2">
+                <button type="button" class="admin-menu-toggle" id="adminMenuToggle">Menu</button>
+                <div class="admin-title-wrap">
+                    <div class="muted">Khu vực quản trị riêng</div>
+                    <h1>@ViewData["Title"]</h1>
+                </div>
+            </div>
+            <div class="admin-user">
+                <div class="fw-bold">@ViewBag.AdminName</div>
+                <div class="small text-muted">Administrator</div>
+            </div>
+        </header>
+
+        <main class="admin-content">
+            @if (TempData["AdminSuccess"] != null) { <div class="alert alert-success">@TempData["AdminSuccess"]</div> }
+            @if (TempData["AdminError"] != null) { <div class="alert alert-danger">@TempData["AdminError"]</div> }
+            @RenderBody()
+        </main>
+    </section>
+</div>
+<script src="~/lib/jquery/dist/jquery.min.js"></script>
+<script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    (function () {
+        var body = document.body;
+        var toggle = document.getElementById('adminMenuToggle');
+        var sidebar = document.getElementById('adminSidebar');
+        if (!toggle || !sidebar) return;
+
+        toggle.addEventListener('click', function () {
+            body.classList.toggle('admin-sidebar-open');
+        });
+
+        document.addEventListener('click', function (event) {
+            if (window.innerWidth > 1100) return;
+            if (!body.classList.contains('admin-sidebar-open')) return;
+            if (sidebar.contains(event.target) || toggle.contains(event.target)) return;
+            body.classList.remove('admin-sidebar-open');
+        });
+    })();
+</script>
+@RenderSection("Scripts", required: false)
+</body>
+</html>

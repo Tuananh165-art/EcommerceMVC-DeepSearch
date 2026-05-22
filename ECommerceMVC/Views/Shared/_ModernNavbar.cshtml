@@ -1,0 +1,95 @@
+﻿@using ECommerceMVC.Data
+@using ECommerceMVC.Helpers
+@inject Hshop2023Context Db
+@{
+    var controller = (ViewContext.RouteData.Values["controller"]?.ToString() ?? string.Empty).ToLowerInvariant();
+    var action = (ViewContext.RouteData.Values["action"]?.ToString() ?? string.Empty).ToLowerInvariant();
+
+    var isHome = controller == "home" && action == "index";
+    var isShop = controller == "hanghoa";
+    var isShowroom = controller == "showroom";
+    var isCart = controller == "cart" && action == "index";
+    var isCheckout = controller == "cart" && action == "checkout";
+
+    var customerId = Context.Session.Get<string>(MySetting.CUSTOMER_KEY);
+    var isAdmin = !string.IsNullOrWhiteSpace(customerId)
+        && Db.KhachHangs.Any(x => x.MaKh == customerId && x.HieuLuc && x.VaiTro == MySetting.ADMIN_ROLE);
+}
+
+<header class="modern-navbar modern-navbar-luxe">
+    <div class="navbar-inner">
+        <div class="navbar-brand-wrap">
+            <a asp-controller="Home" asp-action="Index" class="navbar-logo">DEEPSEARCH</a>
+        </div>
+
+        <nav class="navbar-links" aria-label="Điều hướng chính">
+            <a asp-controller="Home" asp-action="Index" class="@(isHome ? "active" : string.Empty)">Trang chủ</a>
+            <a asp-controller="HangHoa" asp-action="Index" class="@(isShop ? "active" : string.Empty)">Bộ sưu tập</a>
+            <a asp-controller="Showroom" asp-action="Index" class="@(isShowroom ? "active" : string.Empty)">Showroom 3D</a>
+            <a asp-controller="Cart" asp-action="Index" class="@(isCart ? "active" : string.Empty)">Giỏ hàng</a>
+            <a asp-controller="Cart" asp-action="Checkout" class="@(isCheckout ? "active" : string.Empty)">Thanh toán</a>
+            @if (isAdmin)
+            {
+                <a asp-controller="Admin" asp-action="Index" class="@(controller == "admin" ? "active" : string.Empty)">Admin</a>
+            }
+        </nav>
+
+        <div class="navbar-actions">
+            <div class="navbar-utility-cluster d-none d-lg-flex">
+                <button class="navbar-icon-btn" data-open-search aria-label="Tìm kiếm">
+                    <i data-icon="search" data-size="18px"></i>
+                </button>
+                @await Component.InvokeAsync("Cart")
+            </div>
+
+            <div class="navbar-account-wrap d-none d-lg-flex">
+                <partial name="_CustomerAccountNav" />
+            </div>
+
+            <a asp-controller="HangHoa" asp-action="Index" class="navbar-cta d-none d-xl-inline-flex">Mua sắm ngay</a>
+
+            <button class="navbar-icon-btn d-lg-none" data-open-search aria-label="Tìm kiếm">
+                <i data-icon="search" data-size="18px"></i>
+            </button>
+
+            <button class="navbar-hamburger navbar-icon-btn" aria-label="Mở menu điều hướng">
+                <i data-icon="menu" data-size="22px"></i>
+            </button>
+        </div>
+    </div>
+</header>
+
+<div class="mobile-drawer-overlay"></div>
+<div class="mobile-drawer">
+    <div class="drawer-header">
+        <a asp-controller="Home" asp-action="Index" class="navbar-logo" style="font-size: var(--text-xl);">DEEPSEARCH</a>
+        <button class="navbar-icon-btn drawer-close" aria-label="Đóng Menu">
+            <i data-icon="x" data-size="22px"></i>
+        </button>
+    </div>
+
+    <div class="drawer-links mb-4">
+        <a asp-controller="Home" asp-action="Index" class="@(isHome ? "active" : string.Empty)">Trang chủ</a>
+        <a asp-controller="HangHoa" asp-action="Index" class="@(isShop ? "active" : string.Empty)">Bộ sưu tập</a>
+        <a asp-controller="Showroom" asp-action="Index" class="@(isShowroom ? "active" : string.Empty)">Showroom 3D</a>
+        @if (isAdmin)
+        {
+            <a asp-controller="Admin" asp-action="Index" class="@(controller == "admin" ? "active" : string.Empty)">Admin</a>
+        }
+        <a asp-controller="Cart" asp-action="Index" class="@(isCart ? "active" : string.Empty)">Giỏ hàng</a>
+        <a asp-controller="Cart" asp-action="Checkout" class="@(isCheckout ? "active" : string.Empty)">Thanh toán</a>
+    </div>
+
+    <div class="drawer-actions border-top pt-4">
+        <div class="d-flex gap-2 flex-wrap mb-3">
+            <a asp-controller="HangHoa" asp-action="Index" class="btn-modern btn-primary-modern rounded-pill flex-grow-1 justify-content-center">Mua sắm ngay</a>
+            <a asp-controller="Cart" asp-action="Index" class="btn-modern btn-secondary-modern rounded-pill flex-grow-1 justify-content-center">Giỏ hàng</a>
+        </div>
+
+        <div class="drawer-account-wrap mb-3">
+            <partial name="_CustomerAccountNav" />
+        </div>
+
+        <p class="text-secondary mb-2" style="font-size: var(--text-sm); font-weight: 600;">DEEPSEARCH tuyển chọn nội thất và décor tông ấm cho không gian sống sang trọng, tinh giản và hiện đại.</p>
+    </div>
+</div>

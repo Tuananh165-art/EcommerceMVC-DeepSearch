@@ -1,0 +1,88 @@
+@{
+    var controller = (ViewContext.RouteData.Values["controller"]?.ToString() ?? string.Empty).ToLowerInvariant();
+    var currentQuery = Context.Request.Query;
+    var preserveShopFilters = controller == "hanghoa";
+}
+
+<div class="search-overlay">
+    <div class="search-box">
+        <form asp-controller="HangHoa" asp-action="Index" method="get">
+            @if (preserveShopFilters)
+            {
+                @if (currentQuery.TryGetValue("loai", out var loaiValues))
+                {
+                    foreach (var value in loaiValues)
+                    {
+                        <input type="hidden" name="loai" value="@value" />
+                    }
+                }
+
+                @if (currentQuery.TryGetValue("brands", out var brandValues))
+                {
+                    foreach (var value in brandValues)
+                    {
+                        <input type="hidden" name="brands" value="@value" />
+                    }
+                }
+
+                @if (currentQuery.TryGetValue("minPrice", out var minPriceValues))
+                {
+                    foreach (var value in minPriceValues)
+                    {
+                        <input type="hidden" name="minPrice" value="@value" />
+                    }
+                }
+
+                @if (currentQuery.TryGetValue("maxPrice", out var maxPriceValues))
+                {
+                    foreach (var value in maxPriceValues)
+                    {
+                        <input type="hidden" name="maxPrice" value="@value" />
+                    }
+                }
+
+                @if (currentQuery.TryGetValue("sort", out var sortValues))
+                {
+                    foreach (var value in sortValues)
+                    {
+                        <input type="hidden" name="sort" value="@value" />
+                    }
+                }
+
+                @if (currentQuery.TryGetValue("minRating", out var ratingValues))
+                {
+                    foreach (var value in ratingValues)
+                    {
+                        <input type="hidden" name="minRating" value="@value" />
+                    }
+                }
+
+                @if (currentQuery.TryGetValue("view", out var viewValues))
+                {
+                    foreach (var value in viewValues)
+                    {
+                        <input type="hidden" name="view" value="@value" />
+                    }
+                }
+
+                @if (currentQuery.TryGetValue("mode", out var modeValues))
+                {
+                    foreach (var value in modeValues)
+                    {
+                        <input type="hidden" name="mode" value="@value" />
+                    }
+                }
+            }
+
+            <div class="search-input-wrapper">
+                <i data-icon="search" data-size="24px"></i>
+                <input type="search" name="query" class="search-input" placeholder="Bạn đang tìm kiếm sản phẩm gì?..." autocomplete="off" />
+                <button type="button" class="navbar-icon-btn" data-close-search aria-label="Đóng tìm kiếm">
+                    <i data-icon="x" data-size="20px"></i>
+                </button>
+            </div>
+            <div class="search-suggestions" data-search-suggestions aria-live="polite"></div>
+        </form>
+    </div>
+</div>
+

@@ -1,0 +1,26 @@
+@model ECommerceMVC.ViewModels.NewsletterSubscribeVM
+@{
+    var returnUrl = $"{Context?.Request?.Path}{Context?.Request?.QueryString.Value}";
+}
+
+<section class="newsletter-section" aria-labelledby="newsletter-title">
+    <div class="container">
+        <div class="newsletter-content">
+            <span class="badge-glass mb-3">Newsletter</span>
+            <h2 id="newsletter-title">Nhận cảm hứng decor và ưu đãi mới mỗi tuần</h2>
+            <p>
+                Đăng ký email để nhận bộ sưu tập mới, chương trình khuyến mãi và những gợi ý chọn đồ phù hợp cho không gian sống hiện đại.
+            </p>
+
+            <form asp-controller="Newsletter" asp-action="Subscribe" method="post" class="newsletter-form">
+                @Html.AntiForgeryToken()
+                <input asp-for="Email"
+                       type="email"
+                       placeholder="Nhập email của bạn"
+                       aria-label="Email nhận bản tin" />
+                <input asp-for="ReturnUrl" type="hidden" value="@returnUrl" />
+                <button type="submit">Đăng ký</button>
+            </form>
+        </div>
+    </div>
+</section>

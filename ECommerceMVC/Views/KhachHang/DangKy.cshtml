@@ -1,81 +1,162 @@
 @model ECommerceMVC.ViewModels.RegisterVM
 @{
-    ViewData["Title"] = "Đăng ký";
+    ViewData["Title"] = "Đăng Ký Thành Viên | DEEPSEARCH";
 }
 
-<div class="cart-table-area section-padding-100">
-    <div class="container-fluid">
-        <div class="row justify-content-center">
-            <div class="col-12 col-lg-8">
-                <div class="checkout_details_area mt-50 clearfix">
-                    <div class="cart-title">
-                        <h2>Đăng ký thành viên</h2>
-                    </div>
-
-                    <form asp-action="DangKy" method="post" enctype="multipart/form-data">
-                        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label asp-for="MaKh" class="mb-2"></label>
-                                <input asp-for="MaKh" class="form-control" placeholder="Tên đăng nhập" />
-                                <span asp-validation-for="MaKh" class="text-danger"></span>
+<div class="auth-section py-5 d-flex align-items-center" style="min-height: calc(100vh - var(--navbar-height) - 100px);">
+    <div class="container py-4">
+        <div class="row justify-content-center reveal">
+            <div class="col-12 col-xl-11">
+                
+                <!-- Main Split Auth Card -->
+                <div class="glass-card g-0 overflow-hidden shadow-2xl" style="border-radius: var(--radius-xl); border: 1px solid var(--glass-border);">
+                    <div class="row g-0 align-items-stretch" style="min-height: 650px;">
+                        
+                        <!-- Left Panel (Visual Branding) - Desktop only -->
+                        <div class="col-12 col-md-4 bg-gradient d-none d-md-flex flex-column justify-content-between p-5 text-white position-relative overflow-hidden">
+                            <!-- Glow Orbs -->
+                            <div class="accent-orb" style="top: -20%; left: -20%; width: 220px; height: 220px; opacity: 0.2; filter: blur(50px); background: #FFFFFF;"></div>
+                            <div class="accent-orb" style="bottom: -20%; right: -20%; width: 220px; height: 220px; opacity: 0.15; filter: blur(50px); background: #FFFFFF;"></div>
+                            
+                            <div class="brand-header position-relative" style="z-index: 2;">
+                                <h3 class="font-heading font-weight-extrabold text-2xl tracking-wide mb-1" style="font-family: var(--font-heading);">DEEPSEARCH</h3>
+                                <div class="bg-white" style="width: 32px; height: 2px; border-radius: var(--radius-full);"></div>
                             </div>
-                            <div class="col-md-6 mb-3">
-                                <label asp-for="MatKhau" class="mb-2"></label>
-                                <input asp-for="MatKhau" class="form-control" placeholder="Mật khẩu" />
-                                <span asp-validation-for="MatKhau" class="text-danger"></span>
+                            
+                            <div class="brand-body position-relative my-auto" style="z-index: 2;">
+                                <h4 class="font-heading font-weight-bold text-3xl mb-3" style="line-height: 1.3;">Kiến tạo tổ ấm</h4>
+                                <p class="text-white text-sm opacity-80 mb-0 leading-relaxed">Trở thành thành viên DEEPSEARCH để nhận những ưu đãi đặc quyền lên tới 20% cho đơn hàng đầu tiên, theo dõi tiến trình giao hàng, và trải nghiệm dịch vụ chăm sóc tốt nhất.</p>
                             </div>
-
-                            <div class="col-md-6 mb-3">
-                                <label asp-for="HoTen" class="mb-2"></label>
-                                <input asp-for="HoTen" class="form-control" placeholder="Họ và tên" />
-                                <span asp-validation-for="HoTen" class="text-danger"></span>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label asp-for="NgaySinh" class="mb-2"></label>
-                                <input asp-for="NgaySinh" class="form-control" />
-                                <span asp-validation-for="NgaySinh" class="text-danger"></span>
-                            </div>
-
-                            <div class="col-md-6 mb-3">
-                                <label asp-for="DienThoai" class="mb-2"></label>
-                                <input asp-for="DienThoai" class="form-control" placeholder="Số điện thoại" />
-                                <span asp-validation-for="DienThoai" class="text-danger"></span>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label asp-for="Email" class="mb-2"></label>
-                                <input asp-for="Email" class="form-control" placeholder="Email" />
-                                <span asp-validation-for="Email" class="text-danger"></span>
-                            </div>
-
-                            <div class="col-12 mb-3">
-                                <label asp-for="DiaChi" class="mb-2"></label>
-                                <input asp-for="DiaChi" class="form-control" placeholder="Địa chỉ" />
-                                <span asp-validation-for="DiaChi" class="text-danger"></span>
-                            </div>
-
-                            <div class="col-md-6 mb-3">
-                                <label for="Hinh" class="mb-2">Hình đại diện</label>
-                                <input type="file" name="Hinh" class="form-control" />
-                            </div>
-                            <div class="col-md-6 mb-3 d-flex align-items-end">
-                                <div class="form-check">
-                                    <input asp-for="GioiTinh" class="form-check-input" />
-                                    <label class="form-check-label" asp-for="GioiTinh">Nam</label>
-                                </div>
-                            </div>
-
-                            <div class="col-12 mt-2">
-                                <button type="submit" class="btn amado-btn w-100">Đăng ký</button>
+                            
+                            <div class="brand-footer position-relative text-xs opacity-60" style="z-index: 2;">
+                                &copy; @DateTime.Now.Year DEEPSEARCH. All rights reserved.
                             </div>
                         </div>
-                    </form>
 
-                    <div class="mt-3 text-center">
-                        Đã có tài khoản?
-                        <a asp-action="DangNhap" asp-controller="KhachHang">Đăng nhập</a>
+                        <!-- Right Panel (Register Form) -->
+                        <div class="col-12 col-md-8 p-4 p-sm-5 d-flex flex-column justify-content-center bg-card">
+                            <div class="form-header mb-4 text-center text-md-start">
+                                <h2 class="font-heading text-2xl mb-1 text-primary">Đăng ký thành viên</h2>
+                                <p class="text-secondary text-sm mb-0">Hoàn thành mẫu đăng ký dưới đây để tạo tài khoản mới</p>
+                            </div>
+
+                            <form asp-action="DangKy" method="post" enctype="multipart/form-data" class="needs-validation">
+                                <div asp-validation-summary="ModelOnly" class="alert alert-danger border-0 text-sm p-3 mb-3" style="border-radius: var(--radius-md);"></div>
+
+                                <div class="row g-3">
+                                    <!-- Username -->
+                                    <div class="col-12 col-sm-6">
+                                        <label asp-for="MaKh" class="form-label text-xs text-secondary font-weight-semibold">Tên đăng nhập</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text bg-secondary border-color"><i data-icon="user" data-size="16px"></i></span>
+                                            <input asp-for="MaKh" class="form-control bg-secondary border-color" placeholder="Ví dụ: khachhang01" required style="border-radius: 0 var(--radius-md) var(--radius-md) 0;" />
+                                        </div>
+                                        <span asp-validation-for="MaKh" class="text-danger text-xs mt-1 d-block"></span>
+                                    </div>
+
+                                    <!-- Password -->
+                                    <div class="col-12 col-sm-6">
+                                        <label asp-for="MatKhau" class="form-label text-xs text-secondary font-weight-semibold">Mật khẩu</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text bg-secondary border-color"><i data-icon="lock" data-size="16px"></i></span>
+                                            <input asp-for="MatKhau" type="password" class="form-control bg-secondary border-color" placeholder="••••••••" required style="border-radius: 0 var(--radius-md) var(--radius-md) 0;" />
+                                        </div>
+                                        <span asp-validation-for="MatKhau" class="text-danger text-xs mt-1 d-block"></span>
+                                    </div>
+
+                                    <!-- Full Name -->
+                                    <div class="col-12 col-sm-6">
+                                        <label asp-for="HoTen" class="form-label text-xs text-secondary font-weight-semibold">Họ và tên</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text bg-secondary border-color"><i data-icon="edit" data-size="16px"></i></span>
+                                            <input asp-for="HoTen" class="form-control bg-secondary border-color" placeholder="Nguyễn Văn A" required style="border-radius: 0 var(--radius-md) var(--radius-md) 0;" />
+                                        </div>
+                                        <span asp-validation-for="HoTen" class="text-danger text-xs mt-1 d-block"></span>
+                                    </div>
+
+                                    <!-- Date of Birth -->
+                                    <div class="col-12 col-sm-6">
+                                        <label asp-for="NgaySinh" class="form-label text-xs text-secondary font-weight-semibold">Ngày sinh</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text bg-secondary border-color"><i data-icon="clock" data-size="16px"></i></span>
+                                            <input asp-for="NgaySinh" type="date" class="form-control bg-secondary border-color" required style="border-radius: 0 var(--radius-md) var(--radius-md) 0;" />
+                                        </div>
+                                        <span asp-validation-for="NgaySinh" class="text-danger text-xs mt-1 d-block"></span>
+                                    </div>
+
+                                    <!-- Phone -->
+                                    <div class="col-12 col-sm-6">
+                                        <label asp-for="DienThoai" class="form-label text-xs text-secondary font-weight-semibold">Số điện thoại</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text bg-secondary border-color"><i data-icon="phone" data-size="16px"></i></span>
+                                            <input asp-for="DienThoai" type="tel" class="form-control bg-secondary border-color" placeholder="0901234567" required style="border-radius: 0 var(--radius-md) var(--radius-md) 0;" />
+                                        </div>
+                                        <span asp-validation-for="DienThoai" class="text-danger text-xs mt-1 d-block"></span>
+                                    </div>
+
+                                    <!-- Email -->
+                                    <div class="col-12 col-sm-6">
+                                        <label asp-for="Email" class="form-label text-xs text-secondary font-weight-semibold">Địa chỉ Email</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text bg-secondary border-color"><i data-icon="mail" data-size="16px"></i></span>
+                                            <input asp-for="Email" type="email" class="form-control bg-secondary border-color" placeholder="example@mail.com" required style="border-radius: 0 var(--radius-md) var(--radius-md) 0;" />
+                                        </div>
+                                        <span asp-validation-for="Email" class="text-danger text-xs mt-1 d-block"></span>
+                                    </div>
+
+                                    <div class="col-12 col-sm-6">
+                                        <label asp-for="AdminSecretCode" class="form-label text-xs text-secondary font-weight-semibold">Mã bảo mật admin (nếu có)</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text bg-secondary border-color"><i data-icon="shield" data-size="16px"></i></span>
+                                            <input asp-for="AdminSecretCode" type="password" class="form-control bg-secondary border-color" placeholder="Để trống nếu đăng ký tài khoản thường" style="border-radius: 0 var(--radius-md) var(--radius-md) 0;" />
+                                        </div>
+                                        <span asp-validation-for="AdminSecretCode" class="text-danger text-xs mt-1 d-block"></span>
+                                    </div>
+
+                                    <!-- Address -->
+                                    <div class="col-12 col-sm-6">
+                                        <label asp-for="DiaChi" class="form-label text-xs text-secondary font-weight-semibold">Địa chỉ</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text bg-secondary border-color"><i data-icon="pin" data-size="16px"></i></span>
+                                            <input asp-for="DiaChi" class="form-control bg-secondary border-color" placeholder="Số 1 Đại Cồ Việt, Hai Bà Trưng, Hà Nội" required style="border-radius: 0 var(--radius-md) var(--radius-md) 0;" />
+                                        </div>
+                                        <span asp-validation-for="DiaChi" class="text-danger text-xs mt-1 d-block"></span>
+                                    </div>
+
+                                    <!-- Avatar Image -->
+                                    <div class="col-12 col-sm-6">
+                                        <label for="Hinh" class="form-label text-xs text-secondary font-weight-semibold">Hình đại diện</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text bg-secondary border-color"><i data-icon="image" data-size="16px"></i></span>
+                                            <input type="file" name="Hinh" class="form-control bg-secondary border-color" style="border-radius: 0 var(--radius-md) var(--radius-md) 0;" />
+                                        </div>
+                                    </div>
+
+                                    <!-- Gender Switch -->
+                                    <div class="col-12 col-sm-6 d-flex align-items-center mt-4">
+                                        <div class="form-check form-switch d-flex align-items-center gap-2">
+                                            <input asp-for="GioiTinh" class="form-check-input accent-primary cursor-pointer" type="checkbox" style="width: 40px; height: 20px;" />
+                                            <label class="form-check-label text-sm text-secondary cursor-pointer mb-0" asp-for="GioiTinh">Giới tính: Nam</label>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Submit CTA -->
+                                <button type="submit" class="btn btn-gradient w-100 py-3 d-flex align-items-center justify-content-center gap-2 shadow-glow hover-shadow-glow mt-4 mb-3" style="border-radius: var(--radius-md);" data-click-notify="Đang khởi tạo tài khoản mới...">
+                                    Đăng ký thành viên
+                                </button>
+                            </form>
+
+                            <!-- Sign up anchor -->
+                            <div class="text-center mt-2">
+                                <span class="text-secondary text-sm">Đã có tài khoản?</span>
+                                <a asp-action="DangNhap" asp-controller="KhachHang" class="text-gradient font-weight-bold text-sm hover-primary transition-base ms-1">Đăng nhập</a>
+                            </div>
+                        </div>
+
                     </div>
                 </div>
+
             </div>
         </div>
     </div>

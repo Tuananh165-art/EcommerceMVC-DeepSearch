@@ -1,82 +1,213 @@
-@model ECommerceMVC.ViewModels.CheckoutVM
+﻿@model ECommerceMVC.ViewModels.CheckoutVM
 @using ECommerceMVC.ViewModels
 @{
-    ViewData["Title"] = "Thanh toán COD";
+    ViewData["Title"] = "Thanh toán | DEEPSEARCH";
     var cart = ViewBag.Cart as List<CartItem> ?? new List<CartItem>();
     var subtotal = cart.Sum(x => x.ThanhTien);
     var total = subtotal + Model.PhiVanChuyen;
 }
 
-<div class="cart-table-area section-padding-100">
-    <div class="container-fluid">
-        <div class="row">
-            <div class="col-12 col-lg-8">
-                <div class="checkout_details_area mt-50 clearfix">
-                    <div class="cart-title">
-                        <h2>Thông tin giao hàng (COD)</h2>
+<style>
+    .checkout-luxury {
+        background: linear-gradient(180deg, #f9f5ee 0%, #f2e9db 55%, #f8f2e8 100%);
+    }
+    .checkout-luxury .checkout-card {
+        background: rgba(255, 252, 247, 0.92);
+        border: 1px solid rgba(117, 82, 53, 0.14);
+        border-radius: 24px;
+        box-shadow: 0 18px 50px rgba(80, 54, 31, 0.10);
+    }
+    .checkout-luxury .checkout-heading {
+        font-size: 2rem;
+        margin-bottom: 1.25rem;
+    }
+    .checkout-luxury .checkout-label {
+        font-size: .95rem;
+        font-weight: 600;
+        color: #6d5b4b;
+        margin-bottom: .4rem;
+    }
+    .checkout-luxury .checkout-input-group {
+        border: 1px solid #dfd3c4;
+        border-radius: 14px;
+        overflow: hidden;
+        background: #fff;
+        transition: all .2s ease;
+    }
+    .checkout-luxury .checkout-input-group:focus-within {
+        border-color: #b68358;
+        box-shadow: 0 0 0 3px rgba(182, 131, 88, 0.18);
+    }
+    .checkout-luxury .checkout-input-group .input-group-text {
+        background: #f7f1e8;
+        border: 0;
+        color: #7f664f;
+    }
+    .checkout-luxury .checkout-input-group .form-control {
+        border: 0;
+        background: #fff;
+        color: #2f2721;
+        box-shadow: none;
+        padding-top: .8rem;
+        padding-bottom: .8rem;
+    }
+    .checkout-luxury textarea.form-control.checkout-input {
+        border: 1px solid #dfd3c4;
+        border-radius: 14px;
+        background: #fff;
+        color: #2f2721;
+        box-shadow: none;
+        resize: vertical;
+        min-height: 120px;
+    }
+    .checkout-luxury textarea.form-control.checkout-input:focus {
+        border-color: #b68358;
+        box-shadow: 0 0 0 3px rgba(182, 131, 88, 0.18);
+    }
+    .checkout-luxury .payment-card {
+        border: 1px solid #e5d9cb;
+        border-radius: 14px;
+        padding: .85rem 1rem;
+        background: #fff;
+        transition: all .2s ease;
+    }
+    .checkout-luxury .payment-card:hover,
+    .checkout-luxury .payment-card:focus-within {
+        border-color: #b68358;
+        box-shadow: 0 6px 20px rgba(110, 73, 44, 0.12);
+    }
+    .checkout-luxury .sticky-summary {
+        top: calc(var(--navbar-height) + 20px);
+    }
+</style>
+
+<div class="checkout-luxury py-5">
+    <div class="container py-4">
+        <div class="checkout-progress-bar mb-5 reveal">
+            <div class="d-flex justify-content-between align-items-center position-relative mx-auto" style="max-width: 600px;">
+                <div class="position-absolute w-100" style="height: 2px; top: 50%; transform: translateY(-50%); z-index: 1; background: #d8c9b8;">
+                    <div style="width: 50%; height: 100%; background: linear-gradient(90deg, #8c5d3b, #d1ad83);"></div>
+                </div>
+                <div class="d-flex flex-column align-items-center position-relative" style="z-index:2;">
+                    <div class="d-flex align-items-center justify-content-center text-white" style="width:36px;height:36px;border-radius:50%;background:linear-gradient(120deg,#8c5d3b,#d1ad83);">
+                        <i data-icon="check" data-size="16px"></i>
                     </div>
+                    <span class="text-xs mt-2">Giỏ hàng</span>
+                </div>
+                <div class="d-flex flex-column align-items-center position-relative" style="z-index:2;">
+                    <div class="d-flex align-items-center justify-content-center text-white" style="width:36px;height:36px;border-radius:50%;border:2px solid #b68358;background:linear-gradient(120deg,#8c5d3b,#d1ad83);">2</div>
+                    <span class="text-xs mt-2 fw-bold">Thanh toán</span>
+                </div>
+                <div class="d-flex flex-column align-items-center position-relative" style="z-index:2;">
+                    <div class="d-flex align-items-center justify-content-center" style="width:36px;height:36px;border-radius:50%;border:2px solid #d8c9b8;background:#f5eee4;color:#9d8a77;">3</div>
+                    <span class="text-xs mt-2" style="color:#8f7f6f;">Hoàn tất</span>
+                </div>
+            </div>
+        </div>
 
-                    <form asp-action="Checkout" method="post">
+        <div class="row g-4">
+            <div class="col-12 col-lg-8 reveal-left">
+                <div class="checkout-card p-4 p-lg-5">
+                    <h3 class="font-heading checkout-heading border-bottom pb-3" style="border-color:#e4d7c8 !important;">Thông tin giao hàng</h3>
+                    <form asp-action="Checkout" method="post" id="checkoutForm" class="needs-validation">
+                        <input asp-for="MaKh" type="hidden" />
                         <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label asp-for="MaKh" class="mb-2"></label>
-                                <input asp-for="MaKh" class="form-control" readonly />
-                                <small class="text-muted">Mã khách hàng được lấy theo tài khoản đăng nhập.</small>
-                                <span asp-validation-for="MaKh" class="text-danger"></span>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label asp-for="HoTen" class="mb-2"></label>
-                                <input asp-for="HoTen" class="form-control" placeholder="Nhập họ tên người nhận" />
-                                <span asp-validation-for="HoTen" class="text-danger"></span>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label asp-for="DienThoai" class="mb-2"></label>
-                                <input asp-for="DienThoai" class="form-control" placeholder="Nhập số điện thoại" />
-                                <span asp-validation-for="DienThoai" class="text-danger"></span>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label asp-for="Email" class="mb-2"></label>
-                                <input asp-for="Email" class="form-control" placeholder="Nhập email" />
-                                <span asp-validation-for="Email" class="text-danger"></span>
-                            </div>
-                            <div class="col-12 mb-3">
-                                <label asp-for="DiaChi" class="mb-2"></label>
-                                <input asp-for="DiaChi" class="form-control" placeholder="Nhập địa chỉ nhận hàng" />
-                                <span asp-validation-for="DiaChi" class="text-danger"></span>
-                            </div>
-                            <div class="col-12 mb-3">
-                                <label asp-for="GhiChu" class="mb-2"></label>
-                                <textarea asp-for="GhiChu" class="form-control w-100" cols="30" rows="5" placeholder="Ghi chú đơn hàng (nếu có)"></textarea>
-                                <span asp-validation-for="GhiChu" class="text-danger"></span>
+
+                        <div class="row g-3">
+                            <div class="col-12 col-md-6">
+                                <label asp-for="HoTen" class="checkout-label">Họ và tên người nhận</label>
+                                <div class="input-group checkout-input-group">
+                                    <span class="input-group-text"><i data-icon="user" data-size="16px"></i></span>
+                                    <input asp-for="HoTen" class="form-control" placeholder="Nguyễn Văn A" required />
+                                </div>
+                                <span asp-validation-for="HoTen" class="text-danger text-xs"></span>
                             </div>
 
-                            <div class="col-12 mb-4">
-                                <div class="payment-method">
-                                    <div class="custom-control custom-checkbox mr-sm-2">
-                                        <input type="checkbox" class="custom-control-input" id="cod" checked disabled>
-                                        <label class="custom-control-label" for="cod">Thanh toán khi nhận hàng (COD)</label>
-                                    </div>
+                            <div class="col-12 col-md-6">
+                                <label asp-for="DienThoai" class="checkout-label">Số điện thoại liên hệ</label>
+                                <div class="input-group checkout-input-group">
+                                    <span class="input-group-text"><i data-icon="phone" data-size="16px"></i></span>
+                                    <input asp-for="DienThoai" type="tel" class="form-control" placeholder="0901234567" required />
                                 </div>
+                                <span asp-validation-for="DienThoai" class="text-danger text-xs"></span>
                             </div>
 
                             <div class="col-12">
-                                <button type="submit" class="btn amado-btn w-100">Xác nhận đặt hàng COD</button>
+                                <label asp-for="Email" class="checkout-label">Địa chỉ email</label>
+                                <div class="input-group checkout-input-group">
+                                    <span class="input-group-text"><i data-icon="mail" data-size="16px"></i></span>
+                                    <input asp-for="Email" type="email" class="form-control" placeholder="example@mail.com" required />
+                                </div>
+                                <span asp-validation-for="Email" class="text-danger text-xs"></span>
+                            </div>
+
+                            <div class="col-12">
+                                <label asp-for="DiaChi" class="checkout-label">Địa chỉ giao hàng</label>
+                                <div class="input-group checkout-input-group">
+                                    <span class="input-group-text"><i data-icon="map-pin" data-size="16px"></i></span>
+                                    <input asp-for="DiaChi" class="form-control" placeholder="Số 1 Đại Cồ Việt, Hai Bà Trưng, Hà Nội" required />
+                                </div>
+                                <span asp-validation-for="DiaChi" class="text-danger text-xs"></span>
+                            </div>
+
+                            <div class="col-12">
+                                <label asp-for="GhiChu" class="checkout-label">Ghi chú đơn hàng (tùy chọn)</label>
+                                <textarea asp-for="GhiChu" class="form-control checkout-input" rows="4" placeholder="Ví dụ: Giao hàng giờ hành chính, gọi trước khi đến..."></textarea>
+                                <span asp-validation-for="GhiChu" class="text-danger text-xs"></span>
                             </div>
                         </div>
                     </form>
                 </div>
             </div>
 
-            <div class="col-12 col-lg-4">
-                <div class="cart-summary mt-50">
-                    <h5>Đơn hàng của bạn</h5>
-                    <ul class="summary-table">
-                        <li><span>Tạm tính:</span> <span>$@subtotal</span></li>
-                        <li><span>Phí giao:</span> <span>$@Model.PhiVanChuyen</span></li>
-                        <li><span>Tổng:</span> <span>$@total</span></li>
-                    </ul>
-                    <p class="mb-0">Tổng số sản phẩm: @cart.Sum(x => x.SoLuong)</p>
+            <div class="col-12 col-lg-4 reveal-right">
+                <div class="checkout-card p-4 position-sticky sticky-summary">
+                    <h4 class="font-heading text-xl mb-4 border-bottom pb-3" style="border-color:#e4d7c8 !important;">Đơn hàng của bạn</h4>
+
+                    <div class="d-flex flex-column gap-2 mb-4 overflow-y-auto" style="max-height:220px;">
+                        @foreach (var item in cart)
+                        {
+                            <div class="d-flex align-items-center justify-content-between gap-3 p-2" style="border-radius:12px;background:#f7f1e8;">
+                                <div class="d-flex align-items-center gap-2">
+                                    <img src="@item.HinhUrl" class="object-fit-cover rounded" style="width:44px;height:44px;background:#ece2d6;" alt="@item.TenHH" />
+                                    <div>
+                                        <h6 class="text-sm mb-0 fw-semibold text-truncate" style="max-width:140px;">@item.TenHH</h6>
+                                        <small class="text-xs" style="color:#7f6e5e;">SL: @item.SoLuong</small>
+                                    </div>
+                                </div>
+                                <span class="text-xs fw-semibold">@($"{item.ThanhTien:N0} VND")</span>
+                            </div>
+                        }
+                    </div>
+
+                    <div class="d-flex flex-column gap-3 mb-4 pb-3 border-bottom" style="border-color:#e4d7c8 !important;">
+                        <div class="d-flex justify-content-between text-sm"><span style="color:#786857;">Tạm tính</span><strong>@($"{subtotal:N0} VND")</strong></div>
+                        <div class="d-flex justify-content-between text-sm"><span style="color:#786857;">Phí vận chuyển</span><strong>@($"{Model.PhiVanChuyen:N0} VND")</strong></div>
+                        <div class="d-flex justify-content-between pt-2 border-top" style="border-color:#e4d7c8 !important;"><span class="fw-bold">Tổng thanh toán</span><span class="fw-bold" style="color:#9a6943;font-size:1.1rem;">@($"{total:N0} VND")</span></div>
+                    </div>
+
+                    <h5 class="text-uppercase mb-3" style="font-size:.9rem;letter-spacing:.08em;color:#8a7560;">Phương thức thanh toán</h5>
+                    <div class="d-flex flex-column gap-2 mb-4">
+                        <div class="payment-card d-flex align-items-center justify-content-between">
+                            <div class="d-flex align-items-center gap-2">
+                                <input asp-for="CachThanhToan" form="checkoutForm" type="radio" value="COD" id="cod" class="form-check-input" checked="@(Model.CachThanhToan == "COD")" />
+                                <label for="cod" class="mb-0 fw-semibold" style="cursor:pointer;">Thanh toán khi nhận hàng (COD)</label>
+                            </div>
+                            <i data-icon="truck" data-size="18px" style="color:#8b745f;"></i>
+                        </div>
+                        <div class="payment-card d-flex align-items-center justify-content-between">
+                            <div class="d-flex align-items-center gap-2">
+                                <input asp-for="CachThanhToan" form="checkoutForm" type="radio" value="VNPAY" id="vnpaySandbox" class="form-check-input" checked="@(Model.CachThanhToan == "VNPAY")" />
+                                <label for="vnpaySandbox" class="mb-0 fw-semibold" style="cursor:pointer;">VNPay Sandbox</label>
+                            </div>
+                            <span class="badge text-bg-warning">Sandbox</span>
+                        </div>
+                    </div>
+                    <span asp-validation-for="CachThanhToan" class="text-danger text-xs d-block mb-3"></span>
+
+                    <button type="submit" form="checkoutForm" class="btn btn-gradient w-100 py-3 d-flex align-items-center justify-content-center gap-2" style="border-radius:14px;" data-click-notify="Đang xử lý đơn đặt hàng...">
+                        <i data-icon="check-circle" data-size="18px"></i> Xác nhận đặt hàng
+                    </button>
                 </div>
             </div>
         </div>

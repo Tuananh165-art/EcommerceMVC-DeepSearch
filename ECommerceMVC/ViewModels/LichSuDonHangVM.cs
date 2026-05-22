@@ -1,3 +1,5 @@
+using ECommerceMVC.Helpers;
+
 namespace ECommerceMVC.ViewModels
 {
     public class LichSuDonHangItemVM
@@ -14,6 +16,8 @@ namespace ECommerceMVC.ViewModels
     {
         public int MaHh { get; set; }
         public string TenHh { get; set; } = string.Empty;
+        public string Hinh { get; set; } = string.Empty;
+        public string HinhUrl => MyUtil.GetHangHoaImageUrl(Hinh, MaHh);
         public int SoLuong { get; set; }
         public double DonGia { get; set; }
         public double GiamGia { get; set; }

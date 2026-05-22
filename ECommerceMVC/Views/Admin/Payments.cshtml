@@ -1,0 +1,78 @@
+﻿@model AdminPaymentSummaryVM
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Quản lý thanh toán";
+}
+
+<div class="row g-3 mb-4">
+    <div class="col-md-2"><div class="stat-card"><div class="stat-label">Giao dịch</div><div class="stat-value">@Model.TotalTransactions</div></div></div>
+    <div class="col-md-2"><div class="stat-card"><div class="stat-label">Đã thanh toán</div><div class="stat-value">@Model.PaidCount</div></div></div>
+    <div class="col-md-2"><div class="stat-card"><div class="stat-label">Chờ</div><div class="stat-value">@Model.PendingCount</div></div></div>
+    <div class="col-md-2"><div class="stat-card"><div class="stat-label">Lỗi</div><div class="stat-value">@Model.FailedCount</div></div></div>
+    <div class="col-md-2"><div class="stat-card"><div class="stat-label">Hoàn tiền</div><div class="stat-value">@Model.RefundedCount</div></div></div>
+    <div class="col-md-2"><div class="stat-card"><div class="stat-label">Doanh thu online</div><div class="stat-value" style="font-size:20px">@Model.OnlineRevenue.ToString("N0") đ</div></div></div>
+</div>
+
+<div class="admin-card">
+    <form method="get" class="row g-2 align-items-end">
+        <div class="col-md-4">
+            <label class="form-label">Phương thức</label>
+            <input class="form-control" name="method" value="@ViewBag.Method" placeholder="COD, VNPAY, MOMO" />
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">Trạng thái thanh toán</label>
+            <select name="state" class="form-select">
+                <option value="">Tất cả</option>
+                <option value="paid" selected="@(ViewBag.State == "paid")">Đã thanh toán</option>
+                <option value="pending" selected="@(ViewBag.State == "pending")">Chờ kiểm tra/thu COD</option>
+                <option value="error" selected="@(ViewBag.State == "error")">Giao dịch lỗi</option>
+                <option value="refund" selected="@(ViewBag.State == "refund")">Hoàn tiền</option>
+            </select>
+        </div>
+        <div class="col-md-4 d-flex gap-2">
+            <button class="btn btn-primary">Lọc</button>
+            <a asp-action="Payments" class="btn btn-admin-soft">Đặt lại</a>
+        </div>
+    </form>
+</div>
+
+<div class="admin-card">
+    <div class="table-responsive admin-table-wrap" style="max-height:62vh;">
+        <table class="table table-admin table-hover align-middle">
+            <thead>
+                <tr>
+                    <th>Đơn</th>
+                    <th>Khách</th>
+                    <th>Phương thức</th>
+                    <th>Trạng thái gateway</th>
+                    <th>Trạng thái đơn</th>
+                    <th>Tổng</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var p in Model.Rows)
+            {
+                var gatewayClass = p.HasPaymentIssue ? "status-chip status-failed" : "status-chip status-success";
+                <tr>
+                    <td>#@p.MaHd<div class="small text-muted">@p.NgayDat.ToString("dd/MM/yyyy HH:mm")</div></td>
+                    <td>@p.CustomerName</td>
+                    <td>@p.PaymentMethod</td>
+                    <td>
+                        <span class="@gatewayClass">@p.PaymentStatus</span>
+                        <div class="small text-muted">@p.Note</div>
+                    </td>
+                    <td>@p.StatusName</td>
+                    <td>@p.Total.ToString("N0") đ</td>
+                    <td class="text-end">
+                        <a class="btn btn-sm btn-outline-primary" asp-action="OrderDetails" asp-route-id="@p.MaHd">Kiểm tra</a>
+                        <form method="post" asp-action="PaymentMarkFailed" asp-route-id="@p.MaHd" class="d-inline" onsubmit="return confirm('Đánh dấu giao dịch lỗi cho đơn này?');">
+                            <button class="btn btn-sm btn-admin-danger">Đánh dấu lỗi</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</div>

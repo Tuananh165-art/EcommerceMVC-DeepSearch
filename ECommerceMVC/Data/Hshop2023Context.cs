@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 
@@ -23,6 +23,8 @@ public partial class Hshop2023Context : DbContext
 
     public virtual DbSet<GopY> Gopies { get; set; }
 
+    public virtual DbSet<GioHangItem> GioHangItems { get; set; }
+
     public virtual DbSet<HangHoa> HangHoas { get; set; }
 
     public virtual DbSet<HoaDon> HoaDons { get; set; }
@@ -33,6 +35,8 @@ public partial class Hshop2023Context : DbContext
 
     public virtual DbSet<Loai> Loais { get; set; }
 
+    public virtual DbSet<NewsletterSubscription> NewsletterSubscriptions { get; set; }
+
     public virtual DbSet<NhaCungCap> NhaCungCaps { get; set; }
 
     public virtual DbSet<NhanVien> NhanViens { get; set; }
@@ -41,13 +45,19 @@ public partial class Hshop2023Context : DbContext
 
     public virtual DbSet<PhanQuyen> PhanQuyens { get; set; }
 
+    public virtual DbSet<PasswordResetOtp> PasswordResetOtps { get; set; }
+
     public virtual DbSet<PhongBan> PhongBans { get; set; }
+
+    public virtual DbSet<ProductReview> ProductReviews { get; set; }
 
     public virtual DbSet<TrangThai> TrangThais { get; set; }
 
     public virtual DbSet<TrangWeb> TrangWebs { get; set; }
 
     public virtual DbSet<VChiTietHoaDon> VChiTietHoaDons { get; set; }
+
+    public virtual DbSet<Voucher> Vouchers { get; set; }
 
     public virtual DbSet<YeuThich> YeuThiches { get; set; }
 
@@ -148,6 +158,38 @@ public partial class Hshop2023Context : DbContext
                 .HasConstraintName("FK_GopY_ChuDe");
         });
 
+        modelBuilder.Entity<GioHangItem>(entity =>
+        {
+            entity.ToTable("GioHangItem");
+
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => new { e.MaKh, e.MaHh }, "UX_GioHangItem_MaKH_MaHH").IsUnique();
+
+            entity.Property(e => e.MaKh)
+                .HasMaxLength(20)
+                .HasColumnName("MaKH");
+            entity.Property(e => e.MaHh).HasColumnName("MaHH");
+            entity.Property(e => e.SoLuong).HasDefaultValue(1);
+            entity.Property(e => e.CreatedAt)
+                .HasColumnType("datetime")
+                .HasDefaultValueSql("(getdate())");
+            entity.Property(e => e.UpdatedAt)
+                .HasColumnType("datetime")
+                .HasDefaultValueSql("(getdate())");
+
+            entity.HasOne(d => d.MaKhNavigation)
+                .WithMany()
+                .HasForeignKey(d => d.MaKh)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("FK_GioHangItem_KhachHang");
+
+            entity.HasOne(d => d.MaHhNavigation)
+                .WithMany()
+                .HasForeignKey(d => d.MaHh)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("FK_GioHangItem_HangHoa");
+        });
+
         modelBuilder.Entity<HangHoa>(entity =>
         {
             entity.HasKey(e => e.MaHh).HasName("PK_Products");
@@ -160,12 +202,18 @@ public partial class Hshop2023Context : DbContext
             entity.Property(e => e.MaNcc)
                 .HasMaxLength(50)
                 .HasColumnName("MaNCC");
+            entity.Property(e => e.MauSac).HasMaxLength(30);
+            entity.Property(e => e.ChatLieu).HasMaxLength(80);
+            entity.Property(e => e.KichThuoc).HasMaxLength(80);
+            entity.Property(e => e.BaoHanh).HasMaxLength(40);
+            entity.Property(e => e.PhongCach).HasMaxLength(50);
             entity.Property(e => e.MoTaDonVi).HasMaxLength(50);
             entity.Property(e => e.NgaySx)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime")
                 .HasColumnName("NgaySX");
             entity.Property(e => e.TenAlias).HasMaxLength(50);
+            entity.Property(e => e.SoLuongTon).HasDefaultValue(0);
             entity.Property(e => e.TenHh)
                 .HasMaxLength(50)
                 .HasColumnName("TenHH");
@@ -263,7 +311,7 @@ public partial class Hshop2023Context : DbContext
                 .HasMaxLength(50)
                 .HasDefaultValue("Photo.gif");
             entity.Property(e => e.HoTen).HasMaxLength(50);
-            entity.Property(e => e.MatKhau).HasMaxLength(50);
+            entity.Property(e => e.MatKhau).HasMaxLength(255);
             entity.Property(e => e.NgaySinh)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
@@ -281,6 +329,20 @@ public partial class Hshop2023Context : DbContext
             entity.Property(e => e.Hinh).HasMaxLength(50);
             entity.Property(e => e.TenLoai).HasMaxLength(50);
             entity.Property(e => e.TenLoaiAlias).HasMaxLength(50);
+        });
+
+        modelBuilder.Entity<NewsletterSubscription>(entity =>
+        {
+            entity.ToTable("NewsletterSubscription");
+
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => e.Email).IsUnique();
+
+            entity.Property(e => e.Email).HasMaxLength(254);
+            entity.Property(e => e.CreatedAt)
+                .HasColumnType("datetime")
+                .HasDefaultValueSql("(getdate())");
+            entity.Property(e => e.IsActive).HasDefaultValue(true);
         });
 
         modelBuilder.Entity<NhaCungCap>(entity =>
@@ -364,6 +426,29 @@ public partial class Hshop2023Context : DbContext
                 .HasConstraintName("FK_PhanQuyen_TrangWeb");
         });
 
+        modelBuilder.Entity<PasswordResetOtp>(entity =>
+        {
+            entity.ToTable("PasswordResetOtp");
+
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.MaKh)
+                .HasMaxLength(20)
+                .HasColumnName("MaKH");
+            entity.Property(e => e.Email).HasMaxLength(50);
+            entity.Property(e => e.OtpHash).HasMaxLength(128);
+            entity.Property(e => e.CreatedAt).HasColumnType("datetime");
+            entity.Property(e => e.ExpiresAt).HasColumnType("datetime");
+            entity.Property(e => e.UsedAt).HasColumnType("datetime");
+
+            entity.HasIndex(e => new { e.MaKh, e.CreatedAt }, "IX_PasswordResetOtp_MaKH_CreatedAt");
+            entity.HasIndex(e => new { e.Email, e.CreatedAt }, "IX_PasswordResetOtp_Email_CreatedAt");
+
+            entity.HasOne(d => d.MaKhNavigation).WithMany(p => p.PasswordResetOtps)
+                .HasForeignKey(d => d.MaKh)
+                .OnDelete(DeleteBehavior.Restrict)
+                .HasConstraintName("FK_PasswordResetOtp_KhachHang");
+        });
+
         modelBuilder.Entity<PhongBan>(entity =>
         {
             entity.HasKey(e => e.MaPb);
@@ -377,6 +462,35 @@ public partial class Hshop2023Context : DbContext
             entity.Property(e => e.TenPb)
                 .HasMaxLength(50)
                 .HasColumnName("TenPB");
+        });
+
+        modelBuilder.Entity<ProductReview>(entity =>
+        {
+            entity.ToTable("ProductReview");
+
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => new { e.MaHh, e.MaKh }).IsUnique();
+
+            entity.Property(e => e.MaHh).HasColumnName("MaHH");
+            entity.Property(e => e.MaKh)
+                .HasMaxLength(20)
+                .HasColumnName("MaKH");
+            entity.Property(e => e.NoiDung).HasMaxLength(500);
+            entity.Property(e => e.NgayTao)
+                .HasColumnType("datetime")
+                .HasDefaultValueSql("(getdate())");
+
+            entity.HasOne<HangHoa>()
+                .WithMany()
+                .HasForeignKey(e => e.MaHh)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("FK_ProductReview_HangHoa");
+
+            entity.HasOne<KhachHang>()
+                .WithMany()
+                .HasForeignKey(e => e.MaKh)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("FK_ProductReview_KhachHang");
         });
 
         modelBuilder.Entity<TrangThai>(entity =>
@@ -402,6 +516,19 @@ public partial class Hshop2023Context : DbContext
                 .HasColumnName("URL");
         });
 
+        modelBuilder.Entity<Voucher>(entity =>
+        {
+            entity.ToTable("Voucher");
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => e.Code).IsUnique();
+            entity.Property(e => e.Code).HasMaxLength(50);
+            entity.Property(e => e.Description).HasMaxLength(255);
+            entity.Property(e => e.DiscountType).HasMaxLength(20);
+            entity.Property(e => e.StartsAt).HasColumnType("datetime");
+            entity.Property(e => e.EndsAt).HasColumnType("datetime");
+            entity.Property(e => e.IsActive).HasDefaultValue(true);
+        });
+
         modelBuilder.Entity<VChiTietHoaDon>(entity =>
         {
             entity
@@ -414,6 +541,19 @@ public partial class Hshop2023Context : DbContext
             entity.Property(e => e.TenHh)
                 .HasMaxLength(50)
                 .HasColumnName("TenHH");
+        });
+
+        modelBuilder.Entity<Voucher>(entity =>
+        {
+            entity.ToTable("Voucher");
+
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => e.Code, "UX_Voucher_Code").IsUnique();
+            entity.Property(e => e.Code).HasMaxLength(30);
+            entity.Property(e => e.Description).HasMaxLength(120);
+            entity.Property(e => e.DiscountType).HasMaxLength(20);
+            entity.Property(e => e.StartsAt).HasColumnType("datetime");
+            entity.Property(e => e.EndsAt).HasColumnType("datetime");
         });
 
         modelBuilder.Entity<YeuThich>(entity =>
@@ -429,6 +569,9 @@ public partial class Hshop2023Context : DbContext
                 .HasColumnName("MaKH");
             entity.Property(e => e.MoTa).HasMaxLength(255);
             entity.Property(e => e.NgayChon).HasColumnType("datetime");
+
+            entity.HasIndex(e => new { e.MaKh, e.MaHh }, "UX_YeuThich_MaKH_MaHH")
+                .IsUnique();
 
             entity.HasOne(d => d.MaHhNavigation).WithMany(p => p.YeuThiches)
                 .HasForeignKey(d => d.MaHh)

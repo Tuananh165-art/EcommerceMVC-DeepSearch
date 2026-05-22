@@ -1,5 +1,10 @@
 @model ECommerceMVC.ViewModels.CartModel
 
-<a asp-controller="Cart" asp-action="Index" class="cart-nav">
-    <img src="~/amado/img/core-img/cart.png" alt="cart" /> Cart <span>(@Model.Quantity)</span>
+<a asp-controller="Cart" asp-action="Index" class="navbar-icon-btn" aria-label="Giỏ hàng">
+    <i data-icon="shopping-cart" data-size="20px"></i>
+    @if (Model.Quantity > 0)
+    {
+        <span class="cart-badge">@Model.Quantity</span>
+    }
 </a>
+

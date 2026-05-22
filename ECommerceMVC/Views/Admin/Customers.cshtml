@@ -1,0 +1,77 @@
+﻿@model List<AdminCustomerRowVM>
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Quản lý khách hàng";
+}
+
+<div class="admin-card">
+    <form method="get" class="row g-2 align-items-end">
+        <div class="col-md-4">
+            <label class="form-label">Tìm mã, tên, email</label>
+            <input class="form-control" name="q" value="@ViewBag.Query" />
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">Trạng thái</label>
+            <select name="state" class="form-select">
+                <option value="">Tất cả</option>
+                <option value="active" selected="@(ViewBag.State == "active")">Đang hoạt động</option>
+                <option value="locked" selected="@(ViewBag.State == "locked")">Đã khóa</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">Nhóm</label>
+            <select name="group" class="form-select">
+                <option value="">Tất cả</option>
+                <option>Admin</option>
+                <option>VIP</option>
+                <option>Thân thiết</option>
+                <option>Mới</option>
+            </select>
+        </div>
+        <div class="col-md-2 d-flex gap-2">
+            <button class="btn btn-primary">Tìm</button>
+            <a asp-action="Customers" class="btn btn-admin-soft">Đặt lại</a>
+        </div>
+    </form>
+</div>
+
+<div class="admin-card">
+    <div class="table-responsive admin-table-wrap" style="max-height:62vh;">
+        <table class="table table-admin table-hover align-middle">
+            <thead>
+                <tr>
+                    <th>Khách hàng</th>
+                    <th>Liên hệ</th>
+                    <th>Nhóm</th>
+                    <th>Đơn</th>
+                    <th>Đã mua</th>
+                    <th>Trạng thái</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var c in Model)
+            {
+                <tr>
+                    <td><b>@c.HoTen</b><div class="small text-muted">@c.MaKh</div></td>
+                    <td>@c.Email<br /><span class="small text-muted">@c.DienThoai</span></td>
+                    <td><span class="badge badge-soft">@c.GroupName</span></td>
+                    <td>@c.OrderCount</td>
+                    <td>@c.TotalSpent.ToString("N0") đ</td>
+                    <td>
+                        <span class="@(c.HieuLuc ? "status-chip status-success" : "status-chip status-failed")">
+                            @(c.HieuLuc ? "Hoạt động" : "Đã khóa")
+                        </span>
+                    </td>
+                    <td class="text-end">
+                        <a class="btn btn-sm btn-outline-primary" asp-action="CustomerDetails" asp-route-id="@c.MaKh">Chi tiết</a>
+                        <form method="post" asp-action="CustomerToggle" asp-route-id="@c.MaKh" class="d-inline">
+                            <button class="btn btn-sm btn-admin-soft">Khóa/mở</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</div>

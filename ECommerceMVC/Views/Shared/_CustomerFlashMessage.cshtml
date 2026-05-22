@@ -1,0 +1,11 @@
+@if (TempData["SuccessMessage"] != null || TempData["ErrorMessage"] != null)
+{
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="server-flash" data-type="success" style="display:none;">@TempData["SuccessMessage"]</div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="server-flash" data-type="error" style="display:none;">@TempData["ErrorMessage"]</div>
+    }
+}

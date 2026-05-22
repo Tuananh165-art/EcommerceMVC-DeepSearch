@@ -1,34 +1,475 @@
-@model IEnumerable<ECommerceMVC.ViewModels.HangHoaVM>
+@model ECommerceMVC.ViewModels.HangHoaListPageVM
 @{
-    ViewData["Title"] = "Shop";
+    ViewData["Title"] = "Bộ sưu tập | DEEPSEARCH";
+    var hasFilter = Model.Filter.Loai.HasValue
+        || !string.IsNullOrWhiteSpace(Model.Filter.Query)
+        || Model.Filter.Brands.Any()
+        || Model.Filter.Materials.Any()
+        || Model.Filter.Styles.Any()
+        || Model.Filter.Colors.Any()
+        || Model.Filter.MinRating.HasValue
+        || Model.Filter.MinPrice.HasValue
+        || Model.Filter.MaxPrice.HasValue;
 }
 
-<div class="shop_sidebar_area">
-    <div class="widget catagory mb-50">
-        <h6 class="widget-title mb-30">Danh mục</h6>
-        @await Component.InvokeAsync("MenuLoai")
+<div class="container-modern pb-5 shop-shell" id="collectionRoot">
+    <nav aria-label="breadcrumb" class="collection-breadcrumb">
+        <ol class="breadcrumb mb-0">
+            <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Trang chủ</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Bộ sưu tập</li>
+        </ol>
+    </nav>
+
+    <div class="shop-mobile-filter-trigger d-lg-none mb-3">
+        <button class="btn-modern btn-secondary-modern" type="button" data-bs-toggle="offcanvas" data-bs-target="#mobileFilterDrawer" aria-controls="mobileFilterDrawer">
+            <i data-icon="sliders-horizontal" data-size="16px"></i>
+            Bộ lọc
+        </button>
     </div>
 
-    <div class="widget mb-50">
-        <h6 class="widget-title mb-30">Tìm kiếm</h6>
-        @await Html.PartialAsync("_TimKiemPanel")
+    <div class="shop-layout">
+        <aside class="shop-sidebar-card d-none d-lg-block">
+            <div class="shop-side-header">
+                <h3 class="shop-side-title">Bộ lọc sưu tập</h3>
+                <p class="shop-side-copy">Lọc theo danh mục, ngân sách, chất liệu và phong cách để tìm đúng sản phẩm.</p>
+            </div>
+
+            <form asp-controller="HangHoa" asp-action="Index" method="get" class="shop-filter-form" id="desktopFilterForm">
+                <input type="hidden" name="sort" value="@Model.Filter.Sort" />
+                <input type="hidden" name="view" value="@Model.Filter.View" />
+                <input type="hidden" name="mode" value="@Model.Filter.Mode" />
+                <input type="hidden" name="page" value="1" />
+
+                <div class="shop-filter-block">
+                    <label class="shop-filter-label" for="queryDesktop">Tìm trong collection</label>
+                    <input id="queryDesktop" type="search" name="query" value="@Model.Filter.Query" class="form-control shop-input" placeholder="Sofa, bàn, đèn..." />
+                </div>
+
+                <div class="shop-filter-block">
+                    <div class="shop-filter-label">Danh mục</div>
+                    <div class="shop-side-menu">
+                        @await Component.InvokeAsync("MenuLoai")
+                    </div>
+                </div>
+
+                <div class="shop-filter-block shop-filter-accordion">
+                    <details class="shop-filter-panel">
+                        <summary>Giá</summary>
+                        <div class="shop-range-root" data-range-root data-min-default="0" data-max-default="150000000">
+                            <div class="shop-range-track">
+                                <div class="shop-range-highlight" data-range-highlight></div>
+                            </div>
+                            <input type="range" min="0" max="150000000" step="100000" value="@(Model.Filter.MinPrice ?? 0)" data-range-min />
+                            <input type="range" min="0" max="150000000" step="100000" value="@(Model.Filter.MaxPrice ?? 150000000)" data-range-max />
+                            <div class="shop-range-values" data-range-text></div>
+                            <div class="shop-filter-grid-2 shop-range-inputs">
+                                <div>
+                                    <label class="shop-filter-label" for="minPriceDesktop">Giá từ</label>
+                                    <input id="minPriceDesktop" type="number" name="minPrice" value="@(Model.Filter.MinPrice?.ToString("0") ?? "0")" class="form-control shop-input" min="0" step="100000" />
+                                </div>
+                                <div>
+                                    <label class="shop-filter-label" for="maxPriceDesktop">Đến</label>
+                                    <input id="maxPriceDesktop" type="number" name="maxPrice" value="@(Model.Filter.MaxPrice?.ToString("0") ?? "150000000")" class="form-control shop-input" min="0" step="100000" />
+                                </div>
+                            </div>
+                            <div class="shop-price-presets">
+                                <button type="button" class="shop-preset-btn" data-preset-min="0" data-preset-max="1000000">Dưới 1 triệu</button>
+                                <button type="button" class="shop-preset-btn" data-preset-min="1000000" data-preset-max="5000000">1-5 triệu</button>
+                                <button type="button" class="shop-preset-btn" data-preset-min="5000000" data-preset-max="10000000">5-10 triệu</button>
+                                <button type="button" class="shop-preset-btn" data-preset-min="10000000" data-preset-max="150000000">Trên 10 triệu</button>
+                            </div>
+                        </div>
+                    </details>
+
+                    <details class="shop-filter-panel">
+                        <summary>Đánh giá</summary>
+                        <div class="shop-filter-block">
+                            <select id="minRatingDesktop" name="minRating" class="form-select shop-select">
+                                <option value="">Tất cả</option>
+                                @for (var star = 5; star >= 1; star--)
+                                {
+                                    <option value="@star" selected="@(Model.Filter.MinRating == star ? "selected" : null)">@star sao trở lên</option>
+                                }
+                            </select>
+                        </div>
+                    </details>
+
+                    <details class="shop-filter-panel">
+                        <summary>Supplier</summary>
+                        <div class="shop-check-list">
+                            @foreach (var brand in Model.BrandOptions.Take(16))
+                            {
+                                <label><input type="checkbox" name="brands" value="@brand.Value" checked="@(Model.Filter.Brands.Contains(brand.Value) ? "checked" : null)" /> @brand.Label</label>
+                            }
+                        </div>
+                    </details>
+
+                    <details class="shop-filter-panel">
+                        <summary>Chất liệu</summary>
+                        <div class="shop-check-list">
+                            @foreach (var material in Model.MaterialOptions.Take(16))
+                            {
+                                <label><input type="checkbox" name="materials" value="@material" checked="@(Model.Filter.Materials.Contains(material) ? "checked" : null)" /> @material</label>
+                            }
+                        </div>
+                    </details>
+
+                    <details class="shop-filter-panel">
+                        <summary>Màu sắc</summary>
+                        <div class="shop-check-list">
+                            @foreach (var color in Model.ColorOptions.Take(16))
+                            {
+                                <label><input type="checkbox" name="colors" value="@color" checked="@(Model.Filter.Colors.Contains(color) ? "checked" : null)" /> @color</label>
+                            }
+                        </div>
+                    </details>
+
+                    <details class="shop-filter-panel">
+                        <summary>Phong cách</summary>
+                        <div class="shop-check-list">
+                            @foreach (var style in Model.StyleOptions.Take(16))
+                            {
+                                <label><input type="checkbox" name="styles" value="@style" checked="@(Model.Filter.Styles.Contains(style) ? "checked" : null)" /> @style</label>
+                            }
+                        </div>
+                    </details>
+                </div>
+
+                <div class="shop-filter-actions">
+                    <button type="submit" class="btn-modern btn-primary-modern">Áp dụng lọc</button>
+                    @if (hasFilter)
+                    {
+                        <a asp-controller="HangHoa" asp-action="Index" class="btn-modern btn-secondary-modern">Xóa bộ lọc</a>
+                    }
+                </div>
+            </form>
+        </aside>
+
+        <section class="shop-main">
+            <form asp-controller="HangHoa" asp-action="Index" method="get" id="shopFilterForm" class="shop-topbar-card">
+                <input type="hidden" name="loai" value="@(Model.Filter.Loai?.ToString() ?? string.Empty)" />
+                <input type="hidden" name="page" value="@Model.CurrentPage" id="pageHidden" />
+                <input type="hidden" name="mode" value="@Model.Filter.Mode" />
+                <input type="hidden" name="minPrice" value="@(Model.Filter.MinPrice ?? 0)" />
+                <input type="hidden" name="maxPrice" value="@(Model.Filter.MaxPrice ?? 150000000)" />
+                @foreach (var brand in Model.Filter.Brands) { <input type="hidden" name="brands" value="@brand" /> }
+                @foreach (var material in Model.Filter.Materials) { <input type="hidden" name="materials" value="@material" /> }
+                @foreach (var color in Model.Filter.Colors) { <input type="hidden" name="colors" value="@color" /> }
+                @foreach (var style in Model.Filter.Styles) { <input type="hidden" name="styles" value="@style" /> }
+                @if (!string.IsNullOrWhiteSpace(Model.Filter.Query)) { <input type="hidden" name="query" value="@Model.Filter.Query" /> }
+                @if (Model.Filter.MinRating.HasValue) { <input type="hidden" name="minRating" value="@Model.Filter.MinRating.Value" /> }
+
+                <div class="shop-topbar-content">
+                    <div class="shop-topbar-copy">
+                        <span class="shop-topbar-label">Collection results</span>
+                        <h2>@Model.StartItem - @Model.EndItem / @Model.TotalItems sản phẩm</h2>
+                        <p>Tuyển chọn nội thất tông ivory, beige và walnut cho không gian sống cao cấp.</p>
+                    </div>
+                    <div class="shop-topbar-actions">
+                        <div class="shop-topbar-field">
+                            <label for="sortByDate">Sắp xếp</label>
+                            <select id="sortByDate" name="sort" class="form-select shop-select">
+                                <option value="newest" selected="@(Model.Filter.Sort == "newest" ? "selected" : null)">Mới nhất</option>
+                                <option value="best_seller" selected="@(Model.Filter.Sort == "best_seller" ? "selected" : null)">Bán chạy</option>
+                                <option value="popular" selected="@(Model.Filter.Sort == "popular" ? "selected" : null)">Phổ biến</option>
+                                <option value="price_asc" selected="@(Model.Filter.Sort == "price_asc" ? "selected" : null)">Giá tăng dần</option>
+                                <option value="price_desc" selected="@(Model.Filter.Sort == "price_desc" ? "selected" : null)">Giá giảm dần</option>
+                            </select>
+                        </div>
+                        <div class="shop-topbar-field">
+                            <label for="viewProduct">Hiển thị</label>
+                            <select id="viewProduct" name="view" class="form-select shop-select">
+                                <option value="12" selected="@(Model.Filter.View == 12 ? "selected" : null)">12</option>
+                                <option value="24" selected="@(Model.Filter.View == 24 ? "selected" : null)">24</option>
+                                <option value="48" selected="@(Model.Filter.View == 48 ? "selected" : null)">48</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </form>
+
+            <section class="row catalog-grid-row mt-4" id="catalogGridRoot">
+                @if (Model.Items.Any())
+                {
+                    @await Html.PartialAsync("ProductItem", Model.Items)
+                }
+                else
+                {
+                    <div class="col-12">
+                        <div class="shop-empty-state">
+                            <h3>Không tìm thấy sản phẩm phù hợp</h3>
+                            <p>Hãy điều chỉnh bộ lọc hoặc xóa bộ lọc để khám phá thêm thiết kế mới.</p>
+                            <a asp-controller="HangHoa" asp-action="Index" class="btn-modern btn-secondary-modern">Xóa bộ lọc</a>
+                        </div>
+                    </div>
+                }
+            </section>
+
+            @if (Model.TotalPages > 1)
+            {
+                <div class="pagination-wrap">
+                    <nav aria-label="Phân trang sản phẩm">
+                        <ul class="pagination-pill-bar">
+                            @for (var i = 1; i <= Model.TotalPages; i++)
+                            {
+                                <li>
+                                    <button type="button"
+                                            class="pager-btn @(i == Model.CurrentPage ? "pager-btn--active" : string.Empty)"
+                                            onclick="setPageAndSubmit(@i)"
+                                            aria-label="Trang @i"
+                                            aria-current="@(i == Model.CurrentPage ? "page" : null)">@i</button>
+                                </li>
+                            }
+                        </ul>
+                    </nav>
+                </div>
+            }
+        </section>
     </div>
 </div>
 
-<div class="amado_product_area section-padding-100">
-    <div class="container-fluid">
-        <div class="row">
-            <div class="col-12">
-                <div class="product-topbar d-xl-flex align-items-end justify-content-between">
-                    <div class="total-products">
-                        <p>Tổng sản phẩm: @Model.Count()</p>
+<div class="offcanvas offcanvas-end" tabindex="-1" id="mobileFilterDrawer" aria-labelledby="mobileFilterDrawerLabel">
+    <div class="offcanvas-header">
+        <h5 class="offcanvas-title" id="mobileFilterDrawerLabel">Bộ lọc collection</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body">
+        <form asp-controller="HangHoa" asp-action="Index" method="get" class="shop-filter-form">
+            <input type="hidden" name="sort" value="@Model.Filter.Sort" />
+            <input type="hidden" name="view" value="@Model.Filter.View" />
+            <input type="hidden" name="mode" value="@Model.Filter.Mode" />
+            <input type="hidden" name="page" value="1" />
+
+            <label class="shop-filter-label" for="queryMobile">Tìm kiếm</label>
+            <input id="queryMobile" type="search" name="query" value="@Model.Filter.Query" class="form-control shop-input mb-3" />
+
+            <div class="shop-range-root mb-3" data-range-root data-min-default="0" data-max-default="150000000">
+                <div class="shop-range-track">
+                    <div class="shop-range-highlight" data-range-highlight></div>
+                </div>
+                <input type="range" min="0" max="150000000" step="100000" value="@(Model.Filter.MinPrice ?? 0)" data-range-min />
+                <input type="range" min="0" max="150000000" step="100000" value="@(Model.Filter.MaxPrice ?? 150000000)" data-range-max />
+                <div class="shop-range-values" data-range-text></div>
+                <div class="shop-filter-grid-2 shop-range-inputs">
+                    <div>
+                        <label class="shop-filter-label" for="minPriceMobile">Giá từ</label>
+                        <input id="minPriceMobile" type="number" name="minPrice" value="@(Model.Filter.MinPrice?.ToString("0") ?? "0")" class="form-control shop-input" min="0" />
+                    </div>
+                    <div>
+                        <label class="shop-filter-label" for="maxPriceMobile">Đến</label>
+                        <input id="maxPriceMobile" type="number" name="maxPrice" value="@(Model.Filter.MaxPrice?.ToString("0") ?? "150000000")" class="form-control shop-input" min="0" />
                     </div>
                 </div>
             </div>
-        </div>
 
-        <div class="row">
-            @await Html.PartialAsync("ProductItem", Model)
-        </div>
+            <label class="shop-filter-label" for="minRatingMobile">Đánh giá tối thiểu</label>
+            <select id="minRatingMobile" name="minRating" class="form-select shop-select mb-3">
+                <option value="">Tất cả</option>
+                @for (var star = 5; star >= 1; star--)
+                {
+                    <option value="@star" selected="@(Model.Filter.MinRating == star ? "selected" : null)">@star sao trở lên</option>
+                }
+            </select>
+
+            <button type="submit" class="btn-modern btn-primary-modern w-100">Áp dụng lọc</button>
+        </form>
     </div>
 </div>
+
+@section Styles {
+    <style>
+        :root {
+            --shop-sticky-offset: calc(var(--navbar-height) + 1rem);
+        }
+        .shop-shell { padding-top: calc(var(--navbar-height) + 1rem); scroll-margin-top: calc(var(--navbar-height) + 1rem); }
+        .collection-breadcrumb { margin-bottom: 1rem; scroll-margin-top: calc(var(--navbar-height) + 1rem); }
+        .collection-breadcrumb .breadcrumb { background: transparent; padding: 0; }
+        .shop-layout { display: grid; grid-template-columns: 280px minmax(0,1fr); gap: 1.35rem; align-items: start; }
+        .shop-sidebar-card, .shop-topbar-card { border-radius: 1.2rem; border: 1px solid rgba(107, 79, 57, .17); background: #fffaf3; box-shadow: 0 12px 30px rgba(48, 33, 21, .08); }
+        .shop-sidebar-card { padding: 1rem; position: sticky; top: var(--shop-sticky-offset); max-height: calc(100vh - var(--shop-sticky-offset) - .8rem); overflow-y: auto; overflow-x: hidden; scrollbar-gutter: stable; }
+        .shop-side-title { margin: 0 0 .45rem; font: 700 .95rem/1 "Manrope",sans-serif; letter-spacing: .12em; text-transform: uppercase; color: #6a4a35; }
+        .shop-side-copy { margin: 0 0 .9rem; color: #6f5f53; font: 500 .9rem/1.6 "Manrope",sans-serif; }
+        .shop-filter-form { display: grid; gap: .85rem; }
+        .shop-filter-block { display: grid; gap: .45rem; }
+        .shop-filter-grid-2 { grid-template-columns: 1fr 1fr; gap: .55rem; }
+        .shop-filter-label { margin: 0; color: #5e4635; font: 700 .72rem/1 "Manrope",sans-serif; text-transform: uppercase; letter-spacing: .12em; }
+        .shop-input, .shop-select { border-radius: .8rem; border: 1px solid rgba(111,82,58,.2); min-height: 42px; font-size: .9rem; }
+        .shop-filter-accordion { gap: .55rem; }
+        .shop-filter-panel { border: 1px solid rgba(120, 90, 64, .17); border-radius: .9rem; padding: .58rem .65rem; background: #fffdf8; }
+        .shop-filter-panel summary { cursor: pointer; color: #5a4433; font-weight: 800; font-size: .72rem; text-transform: uppercase; letter-spacing: .1em; }
+        .shop-filter-panel[open] summary { margin-bottom: .6rem; }
+        .shop-check-list { display: grid; gap: .4rem; padding-right: .1rem; }
+        .shop-check-list label { color: #5f5145; font-size: .86rem; display: flex; align-items: center; gap: .45rem; }
+        .shop-filter-actions { display: grid; gap: .5rem; }
+        .shop-topbar-card { padding: 1rem 1.1rem; }
+        .shop-topbar-content { display: grid; grid-template-columns: minmax(0,1.4fr) auto; align-items: center; gap: 1rem 1.1rem; }
+        .shop-topbar-label { font: 700 .68rem/1 "Manrope",sans-serif; color: #7d5a41; letter-spacing: .18em; text-transform: uppercase; }
+        .shop-topbar-content h2 { margin: .3rem 0 .15rem; font: 700 1.62rem/1.07 "Cormorant Garamond",serif; color: #261b14; }
+        .shop-topbar-content p { margin: 0; color: #716255; font-size: .9rem; }
+        .shop-topbar-actions { display: grid; grid-template-columns: repeat(2, minmax(132px, 1fr)); gap: .65rem; align-items: center; }
+        .shop-topbar-field { display: grid; gap: .35rem; }
+        .shop-topbar-field label { margin: 0; font: 700 .66rem/1 "Manrope",sans-serif; letter-spacing: .14em; text-transform: uppercase; color: #6f523b; }
+        .shop-empty-state { border: 1px dashed rgba(128,95,69,.35); border-radius: 1rem; background: #fffaf4; padding: 2rem 1.2rem; text-align: center; }
+        .shop-empty-state h3 { margin: 0 0 .5rem; font-size: 1.35rem; }
+        .shop-empty-state p { margin: 0 0 .9rem; }
+        .shop-loading .catalog-luxe-card { animation: skeletonPulse 1.1s ease-in-out infinite alternate; }
+        .catalog-grid-row { --bs-gutter-x: 1.15rem; --bs-gutter-y: 1.3rem; }
+        .catalog-grid-row > [class*='col-'] { display: flex; }
+        .catalog-grid-row .catalog-luxe-card { display: flex; flex-direction: column; width: 100%; min-height: 560px; border-color: rgba(112, 85, 62, .2); background: linear-gradient(180deg, #fdf9f3 0%, #f7efe4 100%); overflow: visible; }
+        .catalog-grid-row .catalog-luxe-media { aspect-ratio: 16/10; min-height: 200px; overflow: hidden; border-radius: 1.2rem 1.2rem 0 0; flex-shrink: 0; }
+        .catalog-grid-row .catalog-luxe-content { display: flex; flex-direction: column; flex: 1 1 auto; gap: .5rem; padding: .9rem 1rem 1rem; min-height: 0; }
+        .catalog-grid-row .catalog-luxe-title { line-height: 1.16; height: 2.6rem; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; flex-shrink: 0; }
+        .catalog-grid-row .catalog-luxe-summary { height: 2.6rem; line-height: 1.5; -webkit-line-clamp: 2; display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden; color: #5b4c40; margin: 0; flex-shrink: 0; }
+        .catalog-grid-row .catalog-luxe-highlights { display: flex; flex-wrap: wrap; gap: .42rem; height: 1.9rem; overflow: hidden; flex-shrink: 0; }
+        .catalog-grid-row .catalog-luxe-highlights span { font-size: .7rem; color: #5c4738; border: 1px solid rgba(123,91,66,.25); background: rgba(255,251,244,.88); border-radius: 999px; padding: .2rem .54rem; font-weight: 700; white-space: nowrap; }
+        .catalog-grid-row .catalog-luxe-footer { margin-top: auto; padding-top: .65rem; border-top: 1px solid rgba(112,85,62,.15); display: flex; flex-direction: column; gap: .5rem; align-items: stretch; flex-shrink: 0; }
+        .catalog-grid-row .catalog-luxe-price-block { display: flex; flex-direction: column; gap: .18rem; }
+        .catalog-grid-row .catalog-luxe-price-label { font-size: .68rem; letter-spacing: .12em; text-transform: uppercase; color: #8f7c6a; font-weight: 800; }
+        .catalog-grid-row .catalog-luxe-price { display: block; white-space: nowrap; line-height: 1.1; font-family: 'Cormorant Garamond', serif; font-size: clamp(1.28rem, 1.6vw, 1.55rem); color: #744527; font-weight: 800; }
+        .catalog-grid-row .catalog-luxe-rating { display: flex; align-items: center; flex-wrap: nowrap; white-space: nowrap; gap: .12rem; color: #a87340; font-size: .82rem; }
+        .catalog-grid-row .catalog-luxe-rating span { margin-left: .4rem; color: #554437; font-weight: 700; }
+        .catalog-grid-row .catalog-luxe-footer-actions { display: grid !important; grid-template-columns: 1fr 1fr; gap: .45rem; }
+        .catalog-grid-row .catalog-luxe-footer-actions form { margin: 0; }
+        .catalog-grid-row .catalog-luxe-cta { min-height: 42px; width: 100%; padding: 0 .75rem; font-size: .88rem; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .catalog-grid-row .catalog-luxe-footer-actions form .catalog-luxe-cta { background: linear-gradient(135deg, #d8b48e, #b57b4d); border-color: rgba(116,73,44,.24); color: #2f1e12; box-shadow: 0 12px 22px rgba(91,58,36,.13); }
+        .catalog-grid-row .catalog-luxe-cta.catalog-luxe-cta-ghost { background: rgba(255,251,245,.9); border: 1px solid rgba(125,87,58,.34); color: #4c3525; box-shadow: none; }
+        .pagination-wrap { display: flex; justify-content: center; margin-top: 2rem; padding-bottom: .5rem; }
+        .pagination-pill-bar { display: flex; align-items: center; gap: .35rem; list-style: none; padding: .45rem .55rem; margin: 0; background: rgba(255,250,243,.9); border: 1px solid rgba(112,85,62,.18); border-radius: 999px; box-shadow: 0 6px 20px rgba(48,30,16,.08); }
+        .pager-btn { min-width: 40px; height: 40px; border-radius: 999px; border: none; background: transparent; color: #5a4330; font-family: 'Manrope', sans-serif; font-size: .9rem; font-weight: 700; cursor: pointer; padding: 0 .6rem; transition: background .2s ease, color .2s ease, box-shadow .2s ease, transform .15s ease; display: inline-flex; align-items: center; justify-content: center; }
+        .pager-btn:hover:not(.pager-btn--active) { background: rgba(193,138,91,.15); color: #7a4e2d; transform: translateY(-1px); }
+        .pager-btn--active { background: linear-gradient(135deg, #d8b48e, #b57b4d); color: #2f1e12; box-shadow: 0 6px 16px rgba(91,58,36,.22); transform: none; pointer-events: none; }
+        .shop-range-root { position: relative; padding-top: .25rem; display: grid; gap: .65rem; }
+        .shop-range-track { height: 8px; border-radius: 999px; background: #ead9c3; position: relative; }
+        .shop-range-highlight { position: absolute; top: 0; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #c18a5b, #8f5b3e); }
+        .shop-range-root input[type="range"] { position: absolute; left: 0; right: 0; width: 100%; pointer-events: none; -webkit-appearance: none; appearance: none; background: transparent; top: .1rem; }
+        .shop-range-root input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; pointer-events: auto; width: 18px; height: 18px; border-radius: 50%; background: #fff8ed; border: 2px solid #8f5b3e; box-shadow: 0 0 0 4px rgba(193, 138, 91, .22); cursor: pointer; }
+        .shop-range-root input[type="range"]::-moz-range-thumb { pointer-events: auto; width: 18px; height: 18px; border-radius: 50%; background: #fff8ed; border: 2px solid #8f5b3e; box-shadow: 0 0 0 4px rgba(193, 138, 91, .22); cursor: pointer; }
+        .shop-range-values { color: #5f4938; font-size: .83rem; font-weight: 700; }
+        .shop-price-presets { display: flex; flex-wrap: wrap; gap: .4rem; }
+        .shop-preset-btn { border: 1px solid rgba(122, 89, 62, .27); background: #fff7ed; color: #5a4434; border-radius: 999px; padding: .26rem .55rem; font-size: .72rem; font-weight: 700; }
+        .shop-preset-btn:hover { background: #f7e8d7; }
+        .shop-range-inputs .shop-input { min-height: 38px; }
+        @@keyframes skeletonPulse { from { opacity: .58; } to { opacity: .95; } }
+        @@media (max-width: 1399.98px){
+            .catalog-grid-row .col-lg-4 { width: 50%; }
+        }
+        @@media (max-width: 1199.98px){
+            .shop-layout{ grid-template-columns: 250px minmax(0,1fr);}
+            .catalog-grid-row .catalog-luxe-footer-actions { grid-template-columns: 1fr; }
+            .catalog-grid-row .catalog-luxe-card { min-height: 598px; }
+        }
+        @@media (max-width: 991.98px){
+            .shop-shell { padding-top: calc(var(--navbar-height) + .7rem); }
+            .shop-layout{ grid-template-columns: 1fr; }
+            .catalog-grid-row .col-lg-4, .catalog-grid-row .col-md-6 { width: 50%; }
+        }
+        @@media (max-width: 767.98px){
+            .shop-topbar-content { grid-template-columns: 1fr; }
+            .shop-topbar-actions { grid-template-columns: 1fr 1fr; }
+            .catalog-grid-row .col-lg-4, .catalog-grid-row .col-md-6 { width: 100%; }
+            .catalog-grid-row .catalog-luxe-card { min-height: auto; }
+        }
+    </style>
+}
+
+@section Scripts {
+    <script>
+        function setPageAndSubmit(page) {
+            document.getElementById('pageHidden').value = page;
+            document.getElementById('shopFilterForm').submit();
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            var form = document.getElementById('shopFilterForm');
+            var grid = document.getElementById('catalogGridRoot');
+            if (form && grid) {
+                form.addEventListener('submit', function () {
+                    grid.classList.add('shop-loading');
+                });
+            }
+
+            var categoryInput = document.getElementById('categorySearchInput');
+            if (categoryInput) {
+                categoryInput.addEventListener('input', function () {
+                    var q = categoryInput.value.toLowerCase().trim();
+                    document.querySelectorAll('#categoryListRoot [data-category-label]').forEach(function (item) {
+                        var t = item.getAttribute('data-category-label').toLowerCase();
+                        item.style.display = t.indexOf(q) >= 0 ? '' : 'none';
+                    });
+                });
+            }
+
+            var formatVnd = function (value) {
+                return new Intl.NumberFormat('vi-VN').format(Math.max(0, Number(value) || 0)) + '₫';
+            };
+
+            document.querySelectorAll('[data-range-root]').forEach(function (root) {
+                var minInput = root.querySelector('[data-range-min]');
+                var maxInput = root.querySelector('[data-range-max]');
+                var minField = root.querySelector('input[name="minPrice"]');
+                var maxField = root.querySelector('input[name="maxPrice"]');
+                var label = root.querySelector('[data-range-text]');
+                var highlight = root.querySelector('[data-range-highlight]');
+                var minDefault = Number(root.getAttribute('data-min-default') || 0);
+                var maxDefault = Number(root.getAttribute('data-max-default') || 150000000);
+                var debounceTimer = null;
+
+                if (!minInput || !maxInput || !minField || !maxField) return;
+
+                var sync = function (triggerSubmit) {
+                    var minVal = Math.max(minDefault, Math.min(Number(minInput.value || 0), Number(maxInput.value || maxDefault)));
+                    var maxVal = Math.min(maxDefault, Math.max(Number(maxInput.value || maxDefault), minVal));
+                    minInput.value = minVal;
+                    maxInput.value = maxVal;
+                    minField.value = minVal;
+                    maxField.value = maxVal;
+                    if (label) label.textContent = formatVnd(minVal) + ' - ' + formatVnd(maxVal);
+                    if (highlight) {
+                        var left = ((minVal - minDefault) / (maxDefault - minDefault)) * 100;
+                        var width = ((maxVal - minVal) / (maxDefault - minDefault)) * 100;
+                        highlight.style.left = left + '%';
+                        highlight.style.width = width + '%';
+                    }
+                    if (triggerSubmit && root.closest('#desktopFilterForm')) {
+                        clearTimeout(debounceTimer);
+                        debounceTimer = setTimeout(function () {
+                            root.closest('#desktopFilterForm').submit();
+                        }, 320);
+                    }
+                };
+
+                minInput.addEventListener('input', function () { sync(true); });
+                maxInput.addEventListener('input', function () { sync(true); });
+                minField.addEventListener('change', function () {
+                    minInput.value = Math.max(minDefault, Number(minField.value || minDefault));
+                    sync(true);
+                });
+                maxField.addEventListener('change', function () {
+                    maxInput.value = Math.min(maxDefault, Number(maxField.value || maxDefault));
+                    sync(true);
+                });
+
+                root.querySelectorAll('[data-preset-min]').forEach(function (btn) {
+                    btn.addEventListener('click', function () {
+                        minInput.value = btn.getAttribute('data-preset-min');
+                        maxInput.value = btn.getAttribute('data-preset-max');
+                        sync(true);
+                    });
+                });
+
+                sync(false);
+            });
+
+            var desktopForm = document.getElementById('desktopFilterForm');
+            if (desktopForm) {
+                var submitWithDebounce = function () {
+                    clearTimeout(desktopForm._debounceId);
+                    desktopForm._debounceId = setTimeout(function () { desktopForm.submit(); }, 280);
+                };
+                desktopForm.querySelectorAll('input[type="checkbox"], select').forEach(function (el) {
+                    el.addEventListener('change', submitWithDebounce);
+                });
+            }
+        });
+    </script>
+}

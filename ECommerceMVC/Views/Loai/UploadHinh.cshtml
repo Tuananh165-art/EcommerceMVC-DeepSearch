@@ -1,0 +1,42 @@
+@{
+    ViewData["Title"] = "Upload ảnh loại hàng";
+}
+
+<div class="cart-table-area section-padding-100">
+    <div class="container-fluid">
+        <div class="row justify-content-center">
+            <div class="col-12 col-lg-6">
+                <div class="checkout_details_area mt-50 clearfix">
+                    <div class="cart-title">
+                        <h2>Upload ảnh loại hàng</h2>
+                    </div>
+
+                    <p class="mb-2"><strong>Mã loại:</strong> @ViewBag.MaLoai</p>
+                    <p class="mb-4"><strong>Tên loại:</strong> @ViewBag.TenLoai</p>
+
+                    <div class="mb-4 text-center">
+                        <p class="mb-2"><strong>Ảnh hiện tại:</strong></p>
+                        <img src="@ViewBag.HinhHienTai" alt="@ViewBag.TenLoai" class="loai-current-image" />
+                    </div>
+
+                    <form asp-action="UploadHinh" asp-controller="Loai" asp-route-id="@ViewBag.MaLoai" method="post" enctype="multipart/form-data">
+                        @Html.AntiForgeryToken()
+                        <div class="mb-3">
+                            <label class="mb-2">Chọn ảnh mới</label>
+                            <input type="file" name="hinh" accept="image/*" class="form-control" />
+                        </div>
+                        <button type="submit" class="btn amado-btn w-100">Cập nhật ảnh loại hàng</button>
+                    </form>
+
+                    <div class="mt-3 text-center">
+                        <a asp-controller="HangHoa" asp-action="Index" asp-route-loai="@ViewBag.MaLoai">Quay lại cửa hàng</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/customer-home-loai.css" />
+}

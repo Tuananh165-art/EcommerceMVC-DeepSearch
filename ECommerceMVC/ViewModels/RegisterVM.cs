@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 
 namespace ECommerceMVC.ViewModels
 {
@@ -9,7 +9,6 @@ namespace ECommerceMVC.ViewModels
 		[Required(ErrorMessage = "Vui lòng nhập tên đăng nhập")]
 		[MaxLength(20, ErrorMessage = "Tên đăng nhập tối đa 20 ký tự")]
 		public string MaKh { get; set; } = string.Empty;
-
 
 		[Display(Name ="Mật khẩu")]
 		[Required(ErrorMessage = "Vui lòng nhập mật khẩu")]
@@ -37,13 +36,16 @@ namespace ECommerceMVC.ViewModels
 		[Display(Name = "Điện thoại")]
 		[Required(ErrorMessage = "Vui lòng nhập số điện thoại")]
 		[MaxLength(24, ErrorMessage = "Điện thoại tối đa 24 ký tự")]
-		[RegularExpression(@"0[9875]\d{8}", ErrorMessage ="Số điện thoại chưa đúng định dạng di động Việt Nam")]
+		[RegularExpression(@"^0\d{9}$", ErrorMessage ="Số điện thoại phải gồm 10 chữ số và bắt đầu bằng số 0")]
 		public string DienThoai { get; set; } = string.Empty;
-
 
 		[Required(ErrorMessage = "Vui lòng nhập email")]
 		[EmailAddress(ErrorMessage ="Email chưa đúng định dạng")]
 		public string Email { get; set; } = string.Empty;
+
+		[Display(Name = "Mã bảo mật admin")]
+		[MaxLength(100, ErrorMessage = "Mã bảo mật admin tối đa 100 ký tự")]
+		public string? AdminSecretCode { get; set; }
 
 		public string? Hinh { get; set; }
 	}
