@@ -8,35 +8,23 @@
         .ToList();
 
     var allHref = Url.Action("Index", "HangHoa") + Microsoft.AspNetCore.Http.QueryString.Create(baseParams).ToUriComponent();
-
     var sorted = Model.OrderBy(x => x.TenLoai).ToList();
-    var grouped = sorted.GroupBy(x => char.ToUpperInvariant((x.TenLoai ?? string.Empty).FirstOrDefault() == '\0' ? '#' : x.TenLoai![0]));
 }
-
-<div class="filter-category-search-wrap">
-    <input type="search" id="categorySearchInput" class="form-control shop-input" placeholder="Tìm danh mục..." aria-label="Tìm danh mục" />
-</div>
 
 <div class="filter-pills category-list-v2" id="categoryListRoot">
     <a href="@allHref" class="filter-pill filter-pill-all @(Context.Request.Query.ContainsKey("loai") ? string.Empty : "active")" data-click-notify="Đang tải danh mục..." data-category-label="Tất Cả">
         Tất Cả
     </a>
 
-    @foreach (var group in grouped)
+    @foreach (var item in sorted)
     {
-        <details class="category-group">
-            <summary>@group.Key</summary>
-            @foreach (var item in group)
-            {
-                var itemParams = new List<KeyValuePair<string, StringValues>>(baseParams)
-                {
-                    new("loai", item.MaLoai.ToString())
-                };
-                var itemHref = Url.Action("Index", "HangHoa") + Microsoft.AspNetCore.Http.QueryString.Create(itemParams).ToUriComponent();
-                <a href="@itemHref" class="filter-pill @(Context.Request.Query["loai"] == item.MaLoai.ToString() ? "active" : string.Empty)" data-click-notify="Đang tải danh mục..." data-category-label="@item.TenLoai">
-                    @item.TenLoai
-                </a>
-            }
-        </details>
+        var itemParams = new List<KeyValuePair<string, StringValues>>(baseParams)
+        {
+            new("loai", item.MaLoai.ToString())
+        };
+        var itemHref = Url.Action("Index", "HangHoa") + Microsoft.AspNetCore.Http.QueryString.Create(itemParams).ToUriComponent();
+        <a href="@itemHref" class="filter-pill @(Context.Request.Query["loai"] == item.MaLoai.ToString() ? "active" : string.Empty)" data-click-notify="Đang tải danh mục..." data-category-label="@item.TenLoai">
+            @item.TenLoai
+        </a>
     }
 </div>

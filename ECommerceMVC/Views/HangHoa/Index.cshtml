@@ -388,17 +388,6 @@
                 });
             }
 
-            var categoryInput = document.getElementById('categorySearchInput');
-            if (categoryInput) {
-                categoryInput.addEventListener('input', function () {
-                    var q = categoryInput.value.toLowerCase().trim();
-                    document.querySelectorAll('#categoryListRoot [data-category-label]').forEach(function (item) {
-                        var t = item.getAttribute('data-category-label').toLowerCase();
-                        item.style.display = t.indexOf(q) >= 0 ? '' : 'none';
-                    });
-                });
-            }
-
             var formatVnd = function (value) {
                 return new Intl.NumberFormat('vi-VN').format(Math.max(0, Number(value) || 0)) + '₫';
             };
@@ -468,6 +457,19 @@
                 };
                 desktopForm.querySelectorAll('input[type="checkbox"], select').forEach(function (el) {
                     el.addEventListener('change', submitWithDebounce);
+                });
+            }
+
+            var topbarForm = document.getElementById('shopFilterForm');
+            if (topbarForm) {
+                topbarForm.querySelectorAll('select[name="sort"], select[name="view"]').forEach(function (el) {
+                    el.addEventListener('change', function () {
+                        var pageHidden = document.getElementById('pageHidden');
+                        if (pageHidden) {
+                            pageHidden.value = '1';
+                        }
+                        topbarForm.submit();
+                    });
                 });
             }
         });

@@ -1328,10 +1328,7 @@
     <script>
         (() => {
             const qtyInput = document.getElementById('qty');
-            const minusBtn = document.querySelector('[data-qty-minus]');
-            const plusBtn = document.querySelector('[data-qty-plus]');
-
-            if (!qtyInput || !minusBtn || !plusBtn) {
+            if (!qtyInput) {
                 return;
             }
 
@@ -1350,16 +1347,6 @@
 
                 qtyInput.value = value;
             };
-
-            minusBtn.addEventListener('click', () => {
-                qtyInput.stepDown();
-                normalize();
-            });
-
-            plusBtn.addEventListener('click', () => {
-                qtyInput.stepUp();
-                normalize();
-            });
 
             qtyInput.addEventListener('change', normalize);
             normalize();
