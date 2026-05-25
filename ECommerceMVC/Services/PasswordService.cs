@@ -14,6 +14,13 @@ public class PasswordService : IPasswordService
         user.RandomKey = null;
     }
 
+    public void SetLegacyPassword(KhachHang user, string password)
+    {
+        var randomKey = MyUtil.GenerateRamdomKey();
+        user.RandomKey = randomKey;
+        user.MatKhau = password.ToMd5Hash(randomKey);
+    }
+
     public bool VerifyPassword(KhachHang user, string password, out bool needsUpgrade)
     {
         needsUpgrade = false;

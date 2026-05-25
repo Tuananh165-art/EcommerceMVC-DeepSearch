@@ -86,7 +86,16 @@ namespace ECommerceMVC.Controllers
 					}
 
 					db.Add(khachHang);
-					db.SaveChanges();
+					try
+					{
+						db.SaveChanges();
+					}
+					catch (DbUpdateException ex) when (IsMatKhauTruncatedError(ex))
+					{
+						logger.LogWarning(ex, "DB schema cũ (MatKhau ngắn) cho MaKh={MaKh}. Fallback sang legacy password hash.", model.MaKh);
+						passwordService.SetLegacyPassword(khachHang, model.MatKhau);
+						db.SaveChanges();
+					}
 
 					HttpContext.Session.Set(MySetting.CUSTOMER_KEY, khachHang.MaKh);
 
@@ -269,7 +278,16 @@ namespace ECommerceMVC.Controllers
 			}
 
 			passwordService.SetPassword(khachHang, model.NewPassword);
-			db.SaveChanges();
+			try
+			{
+				db.SaveChanges();
+			}
+			catch (DbUpdateException ex) when (IsMatKhauTruncatedError(ex))
+			{
+				logger.LogWarning(ex, "DB schema cũ (MatKhau ngắn) khi reset password cho MaKh={MaKh}. Fallback legacy hash.", model.MaKh);
+				passwordService.SetLegacyPassword(khachHang, model.NewPassword);
+				db.SaveChanges();
+			}
 			HttpContext.Session.Remove(MySetting.CART_KEY);
 			HttpContext.Session.Remove(MySetting.CUSTOMER_KEY);
 			TempData["SuccessMessage"] = "Đặt lại mật khẩu thành công. Vui lòng đăng nhập bằng mật khẩu mới.";
@@ -409,6 +427,14 @@ namespace ECommerceMVC.Controllers
 		{
 			return !string.IsNullOrWhiteSpace(adminSecuritySettings.SecretCode)
 				&& string.Equals(adminSecuritySettings.SecretCode.Trim(), submittedSecret?.Trim(), StringComparison.Ordinal);
+		}
+
+		private static bool IsMatKhauTruncatedError(DbUpdateException ex)
+		{
+			var message = ex.InnerException?.Message ?? ex.Message;
+			return message.Contains("String or binary data would be truncated", StringComparison.OrdinalIgnoreCase)
+				&& message.Contains("KhachHang", StringComparison.OrdinalIgnoreCase)
+				&& message.Contains("MatKhau", StringComparison.OrdinalIgnoreCase);
 		}
 
 		private void MergeSessionCartToPersistentCart(string customerId)
