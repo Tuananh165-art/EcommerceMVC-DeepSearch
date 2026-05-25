@@ -21,13 +21,20 @@ echo ""
 
 # --- Check prerequisites ---
 echo "[1/5] Checking prerequisites..."
-for cmd in docker docker-compose; do
-    if ! command -v "$cmd" &>/dev/null; then
-        echo "ERROR: $cmd not found. Install it first."
-        exit 1
-    fi
-done
-echo "  OK: docker and docker-compose found"
+# Detect compose command: V2 uses 'docker compose' (space), V1 uses 'docker-compose' (hyphen)
+COMPOSE_CMD=""
+if command -v docker &>/dev/null && docker compose version &>/dev/null 2>&1; then
+    COMPOSE_CMD="docker compose"
+    echo "  OK: docker compose (V2 plugin) found"
+elif command -v docker-compose &>/dev/null; then
+    COMPOSE_CMD="docker-compose"
+    echo "  OK: docker-compose (V1 standalone) found"
+else
+    echo "ERROR: Docker Compose not found!"
+    echo "  For Docker V2: apt install docker-compose-plugin"
+    echo "  For Docker V1: apt install docker-compose"
+    exit 1
+fi
 
 # --- Check .env ---
 echo "[2/5] Checking .env file..."
@@ -53,29 +60,29 @@ echo "  OK: .env found"
 
 # --- Pull / Build ---
 echo "[3/5] Building Docker images..."
-docker compose build --no-cache
+$COMPOSE_CMD build --no-cache
 echo "  OK: images built"
 
 # --- Stop old containers ---
 echo "[4/5] Stopping old containers (if any)..."
-docker compose down --remove-orphans 2>/dev/null || true
+$COMPOSE_CMD down --remove-orphans 2>/dev/null || true
 echo "  OK: old containers stopped"
 
 # --- Start ---
 echo "[5/5] Starting services..."
-docker compose up -d
+$COMPOSE_CMD up -d
 echo ""
 
 # --- Health check ---
 echo "Waiting for SQL Server to be healthy..."
 for i in $(seq 1 60); do
-    if docker compose ps sqlserver 2>/dev/null | grep -q "healthy"; then
+    if $COMPOSE_CMD ps sqlserver 2>/dev/null | grep -q "healthy"; then
         echo "  SQL Server is healthy!"
         break
     fi
     if [ "$i" -eq 60 ]; then
         echo "  WARNING: SQL Server not healthy after 60s. Check logs:"
-        echo "  docker compose logs sqlserver"
+        echo "  $COMPOSE_CMD logs sqlserver"
     fi
     sleep 2
 done
