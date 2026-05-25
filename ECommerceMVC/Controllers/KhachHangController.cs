@@ -1,4 +1,4 @@
-using AutoMapper;
+﻿using AutoMapper;
 using ECommerceMVC.Data;
 using ECommerceMVC.Helpers;
 using ECommerceMVC.Services;
@@ -56,12 +56,12 @@ namespace ECommerceMVC.Controllers
 
 			if (db.KhachHangs.Any(x => x.MaKh == model.MaKh))
 			{
-				ModelState.AddModelError(nameof(model.MaKh), "Tên đăng nhập đã tồn tại.");
+				ModelState.AddModelError(nameof(model.MaKh), "TÃªn Ä‘Äƒng nháº­p Ä‘Ã£ tá»“n táº¡i.");
 			}
 
 			if (db.KhachHangs.Any(x => x.Email == model.Email))
 			{
-				ModelState.AddModelError(nameof(model.Email), "Email đã được sử dụng.");
+				ModelState.AddModelError(nameof(model.Email), "Email Ä‘Ã£ Ä‘Æ°á»£c sá»­ dá»¥ng.");
 			}
 
 			if (ModelState.IsValid)
@@ -92,7 +92,7 @@ namespace ECommerceMVC.Controllers
 					}
 					catch (DbUpdateException ex) when (IsMatKhauTruncatedError(ex))
 					{
-						logger.LogWarning(ex, "DB schema cũ (MatKhau ngắn) cho MaKh={MaKh}. Fallback sang legacy password hash.", model.MaKh);
+						logger.LogWarning(ex, "DB schema cÅ© (MatKhau ngáº¯n) cho MaKh={MaKh}. Fallback sang legacy password hash.", model.MaKh);
 						passwordService.SetLegacyPassword(khachHang, model.MatKhau);
 						db.SaveChanges();
 					}
@@ -100,7 +100,7 @@ namespace ECommerceMVC.Controllers
 					HttpContext.Session.Set(MySetting.CUSTOMER_KEY, khachHang.MaKh);
 
 					var registerSubject = "[DEEPSEARCH] Đăng ký tài khoản thành công";
-					var registerBody = $"<p>Xin chào {khachHang.HoTen},</p><p>Bạn đã đăng ký tài khoản thành công tại DEEPSEARCH.</p><p>Tên đăng nhập: <strong>{khachHang.MaKh}</strong></p><p>Vai trò tài khoản: <strong>{(khachHang.VaiTro == MySetting.ADMIN_ROLE ? "Admin" : "Khách hàng")}</strong></p>";
+					var registerBody = EmailTemplates.BuildRegisterSuccess(khachHang.HoTen, khachHang.MaKh, khachHang.VaiTro == MySetting.ADMIN_ROLE);
 					if (emailService.TrySend(khachHang.Email, registerSubject, registerBody, out var registerEmailError))
 					{
 						TempData["SuccessMessage"] = "Đăng ký thành công. Email xác nhận đã được gửi.";
@@ -116,9 +116,9 @@ namespace ECommerceMVC.Controllers
 				catch (Exception ex)
 				{
 					var innerMessage = ex.InnerException?.Message;
-					logger.LogError(ex, "Đăng ký thất bại cho MaKh={MaKh}, Email={Email}. Inner: {InnerMessage}", model.MaKh, model.Email, innerMessage);
+					logger.LogError(ex, "ÄÄƒng kÃ½ tháº¥t báº¡i cho MaKh={MaKh}, Email={Email}. Inner: {InnerMessage}", model.MaKh, model.Email, innerMessage);
 					var safeMessage = string.IsNullOrWhiteSpace(innerMessage) ? ex.Message : innerMessage;
-					ModelState.AddModelError(string.Empty, $"Không thể đăng ký tài khoản. Vui lòng thử lại. ({safeMessage})");
+					ModelState.AddModelError(string.Empty, $"KhÃ´ng thá»ƒ Ä‘Äƒng kÃ½ tÃ i khoáº£n. Vui lÃ²ng thá»­ láº¡i. ({safeMessage})");
 				}
 			}
 			return View(model);
@@ -180,7 +180,7 @@ namespace ECommerceMVC.Controllers
 			MergeSessionCartToPersistentCart(khachHang.MaKh);
 
 			var loginSubject = "[DEEPSEARCH] Đăng nhập tài khoản";
-			var loginBody = $"<p>Xin chào {khachHang.HoTen},</p><p>Tài khoản của bạn vừa đăng nhập thành công vào DEEPSEARCH.</p><p>Thời gian: <strong>{DateTime.Now:dd/MM/yyyy HH:mm:ss}</strong></p><p>Tài khoản: <strong>{khachHang.MaKh}</strong></p>";
+			var loginBody = EmailTemplates.BuildLoginNotice(khachHang.HoTen, khachHang.MaKh, DateTime.Now);
 			if (emailService.TrySend(khachHang.Email, loginSubject, loginBody, out var loginEmailError))
 			{
 				TempData["SuccessMessage"] = "Đăng nhập thành công. Email thông báo đã được gửi.";
@@ -224,9 +224,14 @@ namespace ECommerceMVC.Controllers
 			var khachHang = db.KhachHangs.FirstOrDefault(x => x.MaKh.ToLower() == lookup || x.Email.ToLower() == lookup);
 			if (khachHang != null && khachHang.HieuLuc)
 			{
-				var otp = passwordResetService.CreateOtpForCustomer(khachHang);
-				var subject = "[DEEPSEARCH] Mã OTP đặt lại mật khẩu";
-				var body = $"<p>Xin chào {khachHang.HoTen},</p><p>Mã OTP đặt lại mật khẩu của bạn là: <strong style='font-size:20px'>{otp}</strong></p><p>Mã có hiệu lực trong 10 phút. Nếu bạn không yêu cầu đặt lại mật khẩu, vui lòng bỏ qua email này.</p>";
+                var issueResult = passwordResetService.CreateOtpForCustomer(khachHang);
+                if (!issueResult.Success || string.IsNullOrWhiteSpace(issueResult.Otp))
+                {
+                    TempData["ErrorMessage"] = issueResult.ErrorMessage ?? "Khong the gui OTP luc nay.";
+                    return RedirectToAction(nameof(ForgotPassword));
+                }
+                var subject = "[DEEPSEARCH] Ma OTP dat lai mat khau";
+                var body = $"<p>Xin chao {khachHang.HoTen},</p><p>Ma OTP dat lai mat khau cua ban la: <strong style='font-size:20px'>{issueResult.Otp}</strong></p><p>Ma co hieu luc trong 10 phut. Neu ban khong yeu cau dat lai mat khau, vui long bo qua email nay.</p>";
 				if (!emailService.TrySend(khachHang.Email, subject, body, out var emailError))
 				{
 					TempData["ErrorMessage"] = $"Không gửi được email OTP ({emailError}). Vui lòng kiểm tra cấu hình SMTP.";
@@ -266,14 +271,14 @@ namespace ECommerceMVC.Controllers
 			var khachHang = db.KhachHangs.SingleOrDefault(x => x.MaKh == model.MaKh && x.HieuLuc);
 			if (khachHang == null)
 			{
-				ModelState.AddModelError(string.Empty, "Không tìm thấy tài khoản hợp lệ.");
+				ModelState.AddModelError(string.Empty, "KhÃ´ng tÃ¬m tháº¥y tÃ i khoáº£n há»£p lá»‡.");
 				return View(model);
 			}
 
 			var result = passwordResetService.ValidateOtp(model.MaKh, model.Otp);
 			if (!result.Success)
 			{
-				ModelState.AddModelError(nameof(model.Otp), result.ErrorMessage ?? "Mã OTP không hợp lệ.");
+				ModelState.AddModelError(nameof(model.Otp), result.ErrorMessage ?? "MÃ£ OTP khÃ´ng há»£p lá»‡.");
 				return View(model);
 			}
 
@@ -284,7 +289,7 @@ namespace ECommerceMVC.Controllers
 			}
 			catch (DbUpdateException ex) when (IsMatKhauTruncatedError(ex))
 			{
-				logger.LogWarning(ex, "DB schema cũ (MatKhau ngắn) khi reset password cho MaKh={MaKh}. Fallback legacy hash.", model.MaKh);
+				logger.LogWarning(ex, "DB schema cÅ© (MatKhau ngáº¯n) khi reset password cho MaKh={MaKh}. Fallback legacy hash.", model.MaKh);
 				passwordService.SetLegacyPassword(khachHang, model.NewPassword);
 				db.SaveChanges();
 			}
@@ -342,7 +347,7 @@ namespace ECommerceMVC.Controllers
 
 			if (db.KhachHangs.Any(x => x.MaKh != customerId && x.Email == model.Email))
 			{
-				ModelState.AddModelError(nameof(model.Email), "Email đã được sử dụng.");
+				ModelState.AddModelError(nameof(model.Email), "Email Ä‘Ã£ Ä‘Æ°á»£c sá»­ dá»¥ng.");
 			}
 
 			if (!ModelState.IsValid)
@@ -370,27 +375,27 @@ namespace ECommerceMVC.Controllers
 		{
 			var customerId = HttpContext.Session.Get<string>(MySetting.CUSTOMER_KEY);
 			if (string.IsNullOrWhiteSpace(customerId))
-				return Json(new { success = false, message = "Chưa đăng nhập." });
+				return Json(new { success = false, message = "ChÆ°a Ä‘Äƒng nháº­p." });
 
 			if (avatarFile == null || avatarFile.Length == 0)
-				return Json(new { success = false, message = "File không hợp lệ." });
+				return Json(new { success = false, message = "File khÃ´ng há»£p lá»‡." });
 
 			var allowed = new[] { "image/jpeg", "image/jpg", "image/png", "image/webp", "image/gif" };
 			if (!allowed.Contains(avatarFile.ContentType.ToLowerInvariant()))
-				return Json(new { success = false, message = "Chỉ chấp nhận ảnh JPG, PNG, WEBP, GIF." });
+				return Json(new { success = false, message = "Chá»‰ cháº¥p nháº­n áº£nh JPG, PNG, WEBP, GIF." });
 
 			if (avatarFile.Length > 5 * 1024 * 1024)
-				return Json(new { success = false, message = "Ảnh không được lớn hơn 5MB." });
+				return Json(new { success = false, message = "áº¢nh khÃ´ng Ä‘Æ°á»£c lá»›n hÆ¡n 5MB." });
 
 			var khachHang = db.KhachHangs.SingleOrDefault(x => x.MaKh == customerId);
 			if (khachHang == null)
-				return Json(new { success = false, message = "Không tìm thấy tài khoản." });
+				return Json(new { success = false, message = "KhÃ´ng tÃ¬m tháº¥y tÃ i khoáº£n." });
 
 			try
 			{
 				var fileName = MyUtil.UploadHinh(avatarFile, "KhachHang");
 				if (string.IsNullOrWhiteSpace(fileName))
-					return Json(new { success = false, message = "Lưu ảnh thất bại. Vui lòng thử lại." });
+					return Json(new { success = false, message = "LÆ°u áº£nh tháº¥t báº¡i. Vui lÃ²ng thá»­ láº¡i." });
 
 				// Delete old avatar file
 				if (!string.IsNullOrWhiteSpace(khachHang.Hinh))
@@ -405,11 +410,11 @@ namespace ECommerceMVC.Controllers
 				khachHang.Hinh = fileName;
 				db.SaveChanges();
 
-				return Json(new { success = true, url = $"/Hinh/KhachHang/{fileName}", message = "Cập nhật ảnh đại diện thành công!" });
+				return Json(new { success = true, url = $"/Hinh/KhachHang/{fileName}", message = "Cáº­p nháº­t áº£nh Ä‘áº¡i diá»‡n thÃ nh cÃ´ng!" });
 			}
 			catch (Exception ex)
 			{
-				return Json(new { success = false, message = $"Lỗi: {ex.Message}" });
+				return Json(new { success = false, message = $"Lá»—i: {ex.Message}" });
 			}
 		}
 
@@ -487,3 +492,5 @@ namespace ECommerceMVC.Controllers
 		}
 	}
 }
+
+

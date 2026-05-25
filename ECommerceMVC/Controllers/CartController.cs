@@ -460,7 +460,7 @@ namespace ECommerceMVC.Controllers
 
 				var orderLines = string.Join(string.Empty, gioHang.Select(item =>
 					$"<li>{item.TenHH} x{item.SoLuong}: {(item.SoLuong * item.DonGia):N0} VND</li>"));
-				var subject = $"[DEEPSEARCH] XÃ¡c nháº­n Ä‘Æ¡n hÃ ng #{hoaDon.MaHd}";
+				var subject = $"[DEEPSEARCH] Xác nhận đơn hàng #{hoaDon.MaHd}";
 				var body = EmailTemplates.BuildCheckoutSuccess(kh.HoTen, hoaDon.MaHd, paymentStatus, paymentMethodLabel, orderLines, subtotal, shippingFee, total);
 
 				if (emailService.TrySend(kh.Email, subject, body, out var emailError))

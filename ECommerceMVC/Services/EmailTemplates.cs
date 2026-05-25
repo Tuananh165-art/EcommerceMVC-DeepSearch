@@ -1,4 +1,4 @@
-namespace ECommerceMVC.Services;
+﻿namespace ECommerceMVC.Services;
 
 public static class EmailTemplates
 {

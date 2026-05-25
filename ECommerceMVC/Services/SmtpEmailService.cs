@@ -1,3 +1,4 @@
+﻿using System.Text;
 using MailKit.Net.Smtp;
 using MailKit.Security;
 using Microsoft.Extensions.Options;
@@ -18,6 +19,8 @@ public class SmtpEmailService : IEmailService
     public bool TrySend(string toEmail, string subject, string htmlBody, out string? errorMessage)
     {
         errorMessage = null;
+        subject = NormalizeVietnamese(subject);
+        htmlBody = NormalizeVietnamese(htmlBody);
 
         if (string.IsNullOrWhiteSpace(settings.Host) || string.IsNullOrWhiteSpace(settings.FromEmail))
         {
@@ -33,7 +36,13 @@ public class SmtpEmailService : IEmailService
                 : new MailboxAddress(settings.FromName, settings.FromEmail));
             message.To.Add(MailboxAddress.Parse(toEmail));
             message.Subject = subject;
-            message.Body = new TextPart(TextFormat.Html) { Text = htmlBody };
+
+            var htmlPart = new TextPart(TextFormat.Html)
+            {
+                Text = htmlBody
+            };
+            htmlPart.ContentType.Charset = "utf-8";
+            message.Body = htmlPart;
 
             using var client = new SmtpClient();
             var secureSocket = settings.EnableSsl ? SecureSocketOptions.StartTls : SecureSocketOptions.Auto;
@@ -53,5 +62,32 @@ public class SmtpEmailService : IEmailService
             errorMessage = ex.Message;
             return false;
         }
+    }
+
+    private static string NormalizeVietnamese(string input)
+    {
+        if (string.IsNullOrWhiteSpace(input))
+        {
+            return input;
+        }
+
+        if (input.Contains('Ã') || input.Contains('Ä') || input.Contains('Â') || input.Contains('�'))
+        {
+            try
+            {
+                var latin1 = Encoding.GetEncoding("ISO-8859-1");
+                var bytes = latin1.GetBytes(input);
+                var repaired = Encoding.UTF8.GetString(bytes);
+                if (!string.IsNullOrWhiteSpace(repaired))
+                {
+                    return repaired;
+                }
+            }
+            catch
+            {
+            }
+        }
+
+        return input;
     }
 }

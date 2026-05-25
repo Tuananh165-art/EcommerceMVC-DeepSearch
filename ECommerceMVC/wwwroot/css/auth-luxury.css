@@ -1,0 +1,52 @@
+﻿:root {
+  --lux-ivory: #f7f1e8;
+  --lux-champagne: #c89d6d;
+  --lux-walnut: #6b4b36;
+  --lux-taupe: #bca893;
+  --lux-espresso: #251912;
+  --lux-success: #3c7a52;
+  --lux-error: #b25555;
+}
+.fp-shell { min-height: calc(100vh - 130px); background: radial-gradient(circle at 12% 16%, #f4e8da, #f8f4ef 45%, #efe7dd 100%); }
+.fp-split { max-width: 1280px; margin: 0 auto; display: grid; grid-template-columns: 1.08fr 1fr; gap: 26px; padding: 30px 20px; }
+.fp-brand { position: relative; border-radius: 28px; overflow: hidden; min-height: 720px; background: linear-gradient(120deg, rgba(39,25,16,.84), rgba(107,75,54,.66)), url('/Hinh/HangHoa/1.jpg') center/cover no-repeat; }
+.fp-brand-overlay { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(30,18,12,.18), rgba(20,14,9,.78)); }
+.fp-brand-content { position: absolute; left: 38px; right: 38px; bottom: 40px; color: #fff7ef; z-index: 2; }
+.fp-kicker { letter-spacing: .2em; font-size: .75rem; text-transform: uppercase; opacity: .86; }
+.fp-brand h2 { font-family: "Cormorant Garamond", "Times New Roman", serif; font-size: 3rem; margin: .5rem 0; }
+.fp-brand p { color: rgba(255,245,233,.9); max-width: 440px; }
+.fp-form-wrap { display: grid; align-items: center; }
+.fp-card { background: var(--lux-ivory); border: 1px solid #e6d7c6; border-radius: 28px; box-shadow: 0 22px 48px rgba(54,35,24,.12); padding: 32px; }
+.fp-steps { display: flex; gap: 10px; margin-bottom: 24px; }
+.fp-steps span { width: 31px; height: 31px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; border: 1px solid #d9c8b4; color: #8e7761; font-weight: 600; }
+.fp-steps span.is-active { background: linear-gradient(130deg, #d4b088, #9d6f4e); color: #fff; border-color: transparent; }
+.fp-step { display: none; animation: fpFade .35s ease; }
+.fp-step.is-active { display: block; }
+@keyframes fpFade { from { opacity: 0; transform: translateY(8px);} to { opacity:1; transform: translateY(0);} }
+.fp-step h1 { font-family: "Cormorant Garamond", "Times New Roman", serif; font-size: 2.6rem; line-height: 1.05; color: var(--lux-espresso); margin-bottom: 8px; }
+.fp-step p { color: #6f5948; margin-bottom: 18px; }
+.fp-step label { display: block; font-weight: 600; color: #5a4434; margin-bottom: 8px; }
+.fp-step input { width: 100%; height: 52px; border-radius: 15px; border: 1px solid #ccb7a3; background: #fffdf9; padding: 0 16px; color: #2a1d15; }
+.fp-step input:focus { outline: none; border-color: #bb8d60; box-shadow: 0 0 0 4px rgba(200,157,109,.24); }
+.fp-btn { height: 52px; border-radius: 15px; border: 0; padding: 0 18px; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; }
+.fp-btn-primary { width: 100%; color: #fff; background: linear-gradient(120deg, #8f5b3e, #cfab7f); box-shadow: 0 12px 22px rgba(86,56,37,.2); }
+.fp-btn-primary:hover { transform: translateY(-1px); }
+.fp-btn-secondary { color: #5f4634; background: transparent; border: 1px solid #cfbba7; }
+.fp-inline-actions { display: grid; gap: 10px; }
+.fp-link { border: none; background: transparent; color: #7a5b46; text-decoration: underline; }
+.fp-error { display: block; color: var(--lux-error); min-height: 20px; margin: 8px 0; }
+.fp-otp { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; margin-bottom: 8px; }
+.fp-otp .otp-digit { text-align: center; font-size: 1.35rem; font-weight: 700; }
+.fp-strength { width: 100%; height: 7px; background: #e4d5c4; border-radius: 999px; margin: 12px 0; overflow: hidden; }
+.fp-strength span { display: block; height: 100%; width: 0; background: linear-gradient(90deg, #bf6a58, #c79f68, #5f9968); transition: width .2s ease; }
+.fp-success-icon { width: 72px; height: 72px; border-radius: 50%; display: grid; place-items: center; font-size: 2rem; margin-bottom: 10px; color: #fff; background: linear-gradient(145deg, #6ca87f, #3b7f54); }
+@media (max-width: 992px) {
+  .fp-split { grid-template-columns: 1fr; }
+  .fp-brand { min-height: 260px; }
+}
+@media (max-width: 576px) {
+  .fp-shell { min-height: auto; }
+  .fp-split { padding: 12px; gap: 12px; }
+  .fp-card { padding: 20px; border-radius: 20px; }
+  .fp-step h1 { font-size: 2rem; }
+}

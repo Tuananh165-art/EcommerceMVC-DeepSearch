@@ -1,11 +1,43 @@
+@using System.Text
+@functions {
+    private static string NormalizeVietnamese(object? value)
+    {
+        var text = value?.ToString() ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            return text;
+        }
+
+        // Attempt to recover common mojibake pattern: UTF-8 bytes decoded as Latin-1/Windows-1252.
+        if (text.Contains('Ã') || text.Contains('Ä') || text.Contains('Â') || text.Contains('�'))
+        {
+            try
+            {
+                var latin1 = Encoding.GetEncoding("ISO-8859-1");
+                var bytes = latin1.GetBytes(text);
+                var repaired = Encoding.UTF8.GetString(bytes);
+                if (!string.IsNullOrWhiteSpace(repaired))
+                {
+                    return repaired;
+                }
+            }
+            catch
+            {
+            }
+        }
+
+        return text;
+    }
+}
+
 @if (TempData["SuccessMessage"] != null || TempData["ErrorMessage"] != null)
 {
     @if (TempData["SuccessMessage"] != null)
     {
-        <div class="server-flash" data-type="success" style="display:none;">@TempData["SuccessMessage"]</div>
+        <div class="server-flash" data-type="success" style="display:none;">@NormalizeVietnamese(TempData["SuccessMessage"])</div>
     }
     @if (TempData["ErrorMessage"] != null)
     {
-        <div class="server-flash" data-type="error" style="display:none;">@TempData["ErrorMessage"]</div>
+        <div class="server-flash" data-type="error" style="display:none;">@NormalizeVietnamese(TempData["ErrorMessage"])</div>
     }
 }
