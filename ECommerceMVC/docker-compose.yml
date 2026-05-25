@@ -1,16 +1,9 @@
 # ===========================================================
 # Docker Compose V2 — ECommerceMVC + SQL Server
 # ===========================================================
-# Ports used on server:
-#   8080 -> Web app (avoiding 80, 443, 3001, 8081, 5000)
-#   1434 -> SQL Server (avoiding 1433 — already in use)
-# ===========================================================
 
 services:
 
-  # ---------------------------------------------------------
-  # SQL Server 2022 — Database
-  # ---------------------------------------------------------
   sqlserver:
     image: mcr.microsoft.com/mssql/server:2022-latest
     container_name: ecommerce-sqlserver
@@ -23,9 +16,7 @@ services:
     entrypoint: ["/bin/bash", "/init-scripts/entrypoint.sh"]
     volumes:
       - sqlserver_data:/var/opt/mssql
-      # Custom entrypoint script
       - ./docker-init-db.sh:/init-scripts/entrypoint.sh:ro
-      # All SQL init scripts (numbered = ordered execution)
       - ./HShopScript.sql:/init-scripts/01-HShopScript.sql:ro
       - ./seed_hshop2023.sql:/init-scripts/02-seed.sql:ro
       - ./fix_mojibake_vietnamese.sql:/init-scripts/03-fix-mojibake.sql:ro
@@ -36,12 +27,13 @@ services:
       - ./patch_shop_filters_newsletter.sql:/init-scripts/08-patch-shop.sql:ro
       - ./phase4_test_accounts.sql:/init-scripts/09-test-accounts.sql:ro
       - ./reset_sample_hshop2023.sql:/init-scripts/10-reset-sample.sql:ro
+    # Healthcheck chi pass KHI Hshop2023 da ton tai (sau khi init scripts xong)
     healthcheck:
-      test: ["CMD", "/opt/mssql-tools18/bin/sqlcmd", "-S", "localhost", "-U", "sa", "-P", "${SA_PASSWORD:-YourStrong@Passw0rd}", "-C", "-Q", "SELECT 1"]
-      interval: 10s
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P \"$$MSSQL_SA_PASSWORD\" -C -Q \"IF DB_ID('Hshop2023') IS NULL RAISERROR('DB not ready', 16, 1)\" || exit 1"]
+      interval: 5s
       timeout: 5s
-      retries: 10
-      start_period: 90s
+      retries: 30
+      start_period: 120s
     restart: unless-stopped
     networks:
       - ecommerce-net
@@ -50,9 +42,6 @@ services:
         limits:
           memory: 2G
 
-  # ---------------------------------------------------------
-  # ECommerceMVC — ASP.NET 8 Web App
-  # ---------------------------------------------------------
   web:
     build:
       context: .
