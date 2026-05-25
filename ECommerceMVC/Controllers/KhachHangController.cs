@@ -177,7 +177,14 @@ namespace ECommerceMVC.Controllers
 			}
 
 			HttpContext.Session.Set(MySetting.CUSTOMER_KEY, khachHang.MaKh);
-			MergeSessionCartToPersistentCart(khachHang.MaKh);
+			try
+			{
+				MergeSessionCartToPersistentCart(khachHang.MaKh);
+			}
+			catch (Exception ex)
+			{
+				logger.LogError(ex, "Loi dong bo gio hang khi dang nhap cho MaKh={MaKh}", khachHang.MaKh);
+			}
 
 			var loginSubject = "[DEEPSEARCH] Đăng nhập tài khoản";
 			var loginBody = EmailTemplates.BuildLoginNotice(khachHang.HoTen, khachHang.MaKh, DateTime.Now);
