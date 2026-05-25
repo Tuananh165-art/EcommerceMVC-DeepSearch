@@ -29,7 +29,7 @@ services:
       - ./reset_sample_hshop2023.sql:/init-scripts/10-reset-sample.sql:ro
     # Healthcheck: only pass when Hshop2023 DB exists AND is queryable
     healthcheck:
-      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P \"$MSSQL_SA_PASSWORD\" -C -d Hshop2023 -Q \"SELECT 1\" || exit 1"]
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P \"$${MSSQL_SA_PASSWORD}\" -C -d Hshop2023 -Q \"SELECT 1\" || exit 1"]
       interval: 5s
       timeout: 5s
       retries: 30
