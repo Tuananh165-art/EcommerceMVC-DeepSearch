@@ -18,6 +18,7 @@ namespace ECommerceMVC.Controllers
 		private readonly IVoucherService voucherService;
 		private readonly IShippingFeeService shippingFeeService;
 		private readonly IStockService stockService;
+		private readonly ILogger<CartController> logger;
 
 		public CartController(
 			Hshop2023Context context,
@@ -26,7 +27,8 @@ namespace ECommerceMVC.Controllers
 			IVnPayService vnPayService,
 			IVoucherService voucherService,
 			IShippingFeeService shippingFeeService,
-			IStockService stockService)
+			IStockService stockService,
+			ILogger<CartController> logger)
 		{
 			db = context;
 			this.emailService = emailService;
@@ -35,6 +37,7 @@ namespace ECommerceMVC.Controllers
 			this.voucherService = voucherService;
 			this.shippingFeeService = shippingFeeService;
 			this.stockService = stockService;
+			this.logger = logger;
 		}
 
 		public List<CartItem> Cart => GetCart();
@@ -84,8 +87,14 @@ namespace ECommerceMVC.Controllers
 				item.SoLuong = stockService.ClampQuantityToStock(id, item.SoLuong + quantity);
 			}
 
-			SaveCart(gioHang);
-			TempData["SuccessMessage"] = "Đã thêm sản phẩm vào giỏ hàng.";
+			if (TrySaveCart(gioHang, out var saveError))
+			{
+				TempData["SuccessMessage"] = "Đã thêm sản phẩm vào giỏ hàng.";
+			}
+			else
+			{
+				TempData["ErrorMessage"] = $"Đã thêm vào giỏ tạm thời nhưng chưa đồng bộ được dữ liệu ({saveError}).";
+			}
 
 			if (!string.IsNullOrWhiteSpace(returnUrl) && Url.IsLocalUrl(returnUrl))
 			{
@@ -589,31 +598,39 @@ namespace ECommerceMVC.Controllers
 				return sessionCart;
 			}
 
-			var dbCart = db.GioHangItems
-				.AsNoTracking()
-				.Where(x => x.MaKh == CurrentCustomerId)
-				.Join(
-					db.HangHoas.AsNoTracking(),
-					c => c.MaHh,
-					h => h.MaHh,
-					(c, h) => new CartItem
-					{
-						MaHh = h.MaHh,
-						TenHH = h.TenHh,
-						DonGia = h.DonGia ?? 0,
-						Hinh = h.Hinh ?? string.Empty,
-						SoLuong = Math.Max(0, c.SoLuong)
-					})
-				.ToList();
-
-			if (dbCart.Count == 0 && sessionCart.Count > 0)
+			try
 			{
-				SaveCart(sessionCart);
+				var dbCart = db.GioHangItems
+					.AsNoTracking()
+					.Where(x => x.MaKh == CurrentCustomerId)
+					.Join(
+						db.HangHoas.AsNoTracking(),
+						c => c.MaHh,
+						h => h.MaHh,
+						(c, h) => new CartItem
+						{
+							MaHh = h.MaHh,
+							TenHH = h.TenHh,
+							DonGia = h.DonGia ?? 0,
+							Hinh = h.Hinh ?? string.Empty,
+							SoLuong = Math.Max(0, c.SoLuong)
+						})
+					.ToList();
+
+				if (dbCart.Count == 0 && sessionCart.Count > 0)
+				{
+					TrySaveCart(sessionCart, out _);
+					return sessionCart;
+				}
+
+				HttpContext.Session.Set(MySetting.CART_KEY, dbCart);
+				return dbCart;
+			}
+			catch (Exception ex)
+			{
+				logger.LogError(ex, "Không thể tải giỏ hàng DB cho MaKh={MaKh}. Fallback session cart.", CurrentCustomerId);
 				return sessionCart;
 			}
-
-			HttpContext.Session.Set(MySetting.CART_KEY, dbCart);
-			return dbCart;
 		}
 
 		private void SaveCart(List<CartItem> cart)
@@ -664,6 +681,22 @@ namespace ECommerceMVC.Controllers
 			}
 
 			db.SaveChanges();
+		}
+
+		private bool TrySaveCart(List<CartItem> cart, out string? errorMessage)
+		{
+			errorMessage = null;
+			try
+			{
+				SaveCart(cart);
+				return true;
+			}
+			catch (Exception ex)
+			{
+				logger.LogError(ex, "Lỗi lưu giỏ hàng cho MaKh={MaKh}.", CurrentCustomerId);
+				errorMessage = ex.InnerException?.Message ?? ex.Message;
+				return false;
+			}
 		}
 
 		private void ClearCart()
