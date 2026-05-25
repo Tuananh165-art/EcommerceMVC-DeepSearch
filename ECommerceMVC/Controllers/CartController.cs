@@ -465,11 +465,11 @@ namespace ECommerceMVC.Controllers
 
 				if (emailService.TrySend(kh.Email, subject, body, out var emailError))
 				{
-					TempData["SuccessMessage"] = $"Äáº·t hÃ ng thÃ nh cÃ´ng qua {providerName}. Email xÃ¡c nháº­n Ä‘Ã£ Ä‘Æ°á»£c gá»­i.";
+					TempData["SuccessMessage"] = $"Đặt hàng thành công qua {providerName}. Email xác nhận đã được gửi.";
 				}
 				else
 				{
-					TempData["ErrorMessage"] = $"Äáº·t hÃ ng thÃ nh cÃ´ng nhÆ°ng chÆ°a gá»­i Ä‘Æ°á»£c email xÃ¡c nháº­n ({emailError}).";
+					TempData["ErrorMessage"] = $"Đặt hàng thành công nhưng chưa gửi được email xác nhận ({emailError}).";
 				}
 
 				return RedirectToAction(nameof(CheckoutSuccess), new { id = hoaDon.MaHd });
@@ -477,7 +477,7 @@ namespace ECommerceMVC.Controllers
 			catch
 			{
 				transaction.Rollback();
-				ModelState.AddModelError(string.Empty, "KhÃ´ng thá»ƒ táº¡o Ä‘Æ¡n hÃ ng. Vui lÃ²ng thá»­ láº¡i.");
+				ModelState.AddModelError(string.Empty, "Không thể tạo đơn hàng. Vui lòng thử lại.");
 				ViewBag.Cart = gioHang;
 				return View(nameof(Checkout), model);
 			}
