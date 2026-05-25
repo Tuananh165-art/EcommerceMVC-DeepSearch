@@ -73,6 +73,7 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
 	var db = scope.ServiceProvider.GetRequiredService<Hshop2023Context>();
+	await DbSchemaBootstrapper.EnsurePersistentCartAsync(db);
 	await DbSchemaBootstrapper.EnsurePasswordResetOtpAsync(db);
 }
 
