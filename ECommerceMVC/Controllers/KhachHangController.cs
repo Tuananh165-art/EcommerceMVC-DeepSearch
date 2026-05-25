@@ -17,6 +17,7 @@ namespace ECommerceMVC.Controllers
 		private readonly IPasswordService passwordService;
 		private readonly IPasswordResetService passwordResetService;
 		private readonly AdminSecuritySettings adminSecuritySettings;
+		private readonly ILogger<KhachHangController> logger;
 
 		public KhachHangController(
 			Hshop2023Context context,
@@ -24,7 +25,8 @@ namespace ECommerceMVC.Controllers
 			IEmailService emailService,
 			IPasswordService passwordService,
 			IPasswordResetService passwordResetService,
-			IOptions<AdminSecuritySettings> adminSecurityOptions)
+			IOptions<AdminSecuritySettings> adminSecurityOptions,
+			ILogger<KhachHangController> logger)
 		{
 			db = context;
 			_mapper = mapper;
@@ -32,6 +34,7 @@ namespace ECommerceMVC.Controllers
 			this.passwordService = passwordService;
 			this.passwordResetService = passwordResetService;
 			adminSecuritySettings = adminSecurityOptions.Value;
+			this.logger = logger;
 		}
 
 		[HttpGet]
@@ -70,10 +73,16 @@ namespace ECommerceMVC.Controllers
 					passwordService.SetPassword(khachHang, model.MatKhau);
 					khachHang.HieuLuc = true;
 					khachHang.VaiTro = IsAdminRegistration(model.AdminSecretCode) ? MySetting.ADMIN_ROLE : 0;
+					khachHang.RandomKey = MyUtil.GenerateRamdomKey();
+					khachHang.Hinh = "default-avatar.svg";
 
 					if (Hinh != null)
 					{
 						khachHang.Hinh = MyUtil.UploadHinh(Hinh, "KhachHang");
+						if (string.IsNullOrWhiteSpace(khachHang.Hinh))
+						{
+							khachHang.Hinh = "default-avatar.svg";
+						}
 					}
 
 					db.Add(khachHang);
@@ -97,7 +106,10 @@ namespace ECommerceMVC.Controllers
 				}
 				catch (Exception ex)
 				{
-					ModelState.AddModelError(string.Empty, $"Không thể đăng ký tài khoản. Vui lòng thử lại. ({ex.Message})");
+					var innerMessage = ex.InnerException?.Message;
+					logger.LogError(ex, "Đăng ký thất bại cho MaKh={MaKh}, Email={Email}. Inner: {InnerMessage}", model.MaKh, model.Email, innerMessage);
+					var safeMessage = string.IsNullOrWhiteSpace(innerMessage) ? ex.Message : innerMessage;
+					ModelState.AddModelError(string.Empty, $"Không thể đăng ký tài khoản. Vui lòng thử lại. ({safeMessage})");
 				}
 			}
 			return View(model);
