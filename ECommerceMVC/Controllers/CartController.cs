@@ -134,7 +134,7 @@ namespace ECommerceMVC.Controllers
 			if (clampedQuantity <= 0)
 			{
 				gioHang.Remove(item);
-				TempData["ErrorMessage"] = "Sáº£n pháº©m Ä‘Ã£ háº¿t hÃ ng vÃ  Ä‘Æ°á»£c xÃ³a khá»i giá».";
+				TempData["ErrorMessage"] = "Sản phẩm đã hết hàng và được xóa khỏi giỏ.";
 			}
 			else
 			{
@@ -171,7 +171,7 @@ namespace ECommerceMVC.Controllers
 		public IActionResult RemoveVoucher(string? returnUrl = null)
 		{
 			HttpContext.Session.Remove(AppliedVoucherSessionKey);
-			TempData["SuccessMessage"] = "ÄÃ£ xÃ³a voucher khá»i Ä‘Æ¡n hÃ ng.";
+			TempData["SuccessMessage"] = "Đã xóa voucher khỏi đơn hàng.";
 			return RedirectToSafeReturn(returnUrl);
 		}
 
@@ -186,7 +186,7 @@ namespace ECommerceMVC.Controllers
 			var gioHang = Cart;
 			if (!gioHang.Any())
 			{
-				TempData["ErrorMessage"] = "Giá» hÃ ng Ä‘ang trá»‘ng, khÃ´ng thá»ƒ thanh toÃ¡n.";
+				TempData["ErrorMessage"] = "Giỏ hàng đang trống, không thể thanh toán.";
 				return RedirectToAction(nameof(Index));
 			}
 
@@ -225,7 +225,7 @@ namespace ECommerceMVC.Controllers
 			var gioHang = Cart;
 			if (!gioHang.Any())
 			{
-				TempData["ErrorMessage"] = "Giá» hÃ ng Ä‘ang trá»‘ng, khÃ´ng thá»ƒ thanh toÃ¡n.";
+				TempData["ErrorMessage"] = "Giỏ hàng đang trống, không thể thanh toán.";
 				return RedirectToAction(nameof(Index));
 			}
 
@@ -241,7 +241,7 @@ namespace ECommerceMVC.Controllers
 			var kh = db.KhachHangs.SingleOrDefault(x => x.MaKh == CurrentCustomerId);
 			if (kh == null)
 			{
-				ModelState.AddModelError(nameof(model.MaKh), "KhÃ¡ch hÃ ng khÃ´ng tá»“n táº¡i.");
+				ModelState.AddModelError(nameof(model.MaKh), "Khách hàng không tồn tại.");
 			}
 
 			if (!ModelState.IsValid)
@@ -271,7 +271,7 @@ namespace ECommerceMVC.Controllers
 						DiaChi = model.DiaChi,
 						GhiChu = model.GhiChu,
 						CachThanhToan = "VNPAY",
-						CachVanChuyen = string.IsNullOrWhiteSpace(model.CachVanChuyen) ? "Giao hÃ ng tiÃªu chuáº©n" : model.CachVanChuyen,
+						CachVanChuyen = string.IsNullOrWhiteSpace(model.CachVanChuyen) ? "Giao hàng tiêu chuẩn" : model.CachVanChuyen,
 						PhiVanChuyen = model.PhiVanChuyen,
 						TransactionReference = transactionReference
 					});
@@ -280,7 +280,7 @@ namespace ECommerceMVC.Controllers
 				}
 				catch (Exception ex)
 				{
-					ModelState.AddModelError(nameof(model.CachThanhToan), $"KhÃ´ng thá»ƒ khá»Ÿi táº¡o thanh toÃ¡n VNPay ({ex.Message}).");
+					ModelState.AddModelError(nameof(model.CachThanhToan), $"Không thể khởi tạo thanh toán VNPay ({ex.Message}).");
 					ViewBag.Cart = gioHang;
 					return View(model);
 				}
@@ -288,7 +288,7 @@ namespace ECommerceMVC.Controllers
 
 			if (kh == null)
 			{
-				ModelState.AddModelError(nameof(model.MaKh), "KhÃ´ng tÃ¬m tháº¥y thÃ´ng tin khÃ¡ch hÃ ng Ä‘á»ƒ thanh toÃ¡n.");
+				ModelState.AddModelError(nameof(model.MaKh), "Không tìm thấy thông tin khách hàng để thanh toán.");
 				ViewBag.Cart = gioHang;
 				return View(model);
 			}
@@ -308,26 +308,26 @@ namespace ECommerceMVC.Controllers
 			var gioHang = Cart;
 			if (pendingOrder == null || !gioHang.Any())
 			{
-				TempData["ErrorMessage"] = "KhÃ´ng tÃ¬m tháº¥y dá»¯ liá»‡u Ä‘Æ¡n hÃ ng chá» thanh toÃ¡n VNPay.";
+				TempData["ErrorMessage"] = "Không tìm thấy dữ liệu đơn hàng chờ thanh toán VNPay.";
 				return RedirectToAction(nameof(Checkout));
 			}
 
 			var result = vnPayService.ValidateReturn(Request.Query);
 			if (!result.SignatureValid)
 			{
-				TempData["ErrorMessage"] = "Chá»¯ kÃ½ VNPay khÃ´ng há»£p lá»‡.";
+				TempData["ErrorMessage"] = "Chữ ký VNPay không hợp lệ.";
 				return RedirectToAction(nameof(Checkout));
 			}
 
 			if (!result.IsSuccess)
 			{
-				TempData["ErrorMessage"] = $"Thanh toÃ¡n VNPay chÆ°a thÃ nh cÃ´ng (mÃ£ pháº£n há»“i: {result.ResponseCode}).";
+				TempData["ErrorMessage"] = $"Thanh toán VNPay chưa thành công (mã phản hồi: {result.ResponseCode}).";
 				return RedirectToAction(nameof(Checkout));
 			}
 
 			if (!string.Equals(result.TransactionReference, pendingOrder.TransactionReference, StringComparison.Ordinal))
 			{
-				TempData["ErrorMessage"] = "MÃ£ giao dá»‹ch VNPay khÃ´ng khá»›p vá»›i Ä‘Æ¡n hÃ ng chá».";
+				TempData["ErrorMessage"] = "Mã giao dịch VNPay không khớp với đơn hàng chờ.";
 				return RedirectToAction(nameof(Checkout));
 			}
 
@@ -347,7 +347,7 @@ namespace ECommerceMVC.Controllers
 			var kh = db.KhachHangs.SingleOrDefault(x => x.MaKh == pendingOrder.CustomerId);
 			if (kh == null)
 			{
-				TempData["ErrorMessage"] = "KhÃ´ng tÃ¬m tháº¥y khÃ¡ch hÃ ng Ä‘á»ƒ hoÃ n táº¥t Ä‘Æ¡n VNPay.";
+				TempData["ErrorMessage"] = "Không tìm thấy khách hàng để hoàn tất đơn VNPay.";
 				return RedirectToAction(nameof(Checkout));
 			}
 
@@ -357,8 +357,8 @@ namespace ECommerceMVC.Controllers
 				gioHang,
 				kh,
 				"VNPay",
-				$"VNPay - MÃ£ GD: {result.TransactionNo}",
-				$"Thanh toÃ¡n VNPay thÃ nh cÃ´ng - Ref {result.TransactionReference}");
+				$"VNPay - Mã GD: {result.TransactionNo}",
+				$"Thanh toán VNPay thành công - Ref {result.TransactionReference}");
 		}
 
 		[HttpGet]
@@ -383,7 +383,7 @@ namespace ECommerceMVC.Controllers
 			var paymentResult = paymentSandboxService.ProcessSandboxPayment(model.CachThanhToan, model, gioHang.Sum(x => x.ThanhTien) + Math.Max(0, model.PhiVanChuyen));
 			if (!paymentResult.IsSuccess)
 			{
-				ModelState.AddModelError(nameof(model.CachThanhToan), "KhÃ´ng thá»ƒ xá»­ lÃ½ thanh toÃ¡n. Vui lÃ²ng thá»­ láº¡i.");
+				ModelState.AddModelError(nameof(model.CachThanhToan), "Không thể xử lý thanh toán. Vui lòng thử lại.");
 				ViewBag.Cart = gioHang;
 				return View(nameof(Checkout), model);
 			}
@@ -406,7 +406,7 @@ namespace ECommerceMVC.Controllers
 			var trangThaiMoi = db.TrangThais.OrderBy(x => x.MaTrangThai).FirstOrDefault();
 			if (trangThaiMoi == null)
 			{
-				ModelState.AddModelError(string.Empty, "ChÆ°a cáº¥u hÃ¬nh tráº¡ng thÃ¡i Ä‘Æ¡n hÃ ng trong há»‡ thá»‘ng.");
+				ModelState.AddModelError(string.Empty, "Chưa cấu hình trạng thái đơn hàng trong hệ thống.");
 				ViewBag.Cart = gioHang;
 				return View(nameof(Checkout), model);
 			}
@@ -434,7 +434,7 @@ namespace ECommerceMVC.Controllers
 					HoTen = model.HoTen,
 					DiaChi = model.DiaChi,
 					CachThanhToan = paymentMethodLabel,
-					CachVanChuyen = string.IsNullOrWhiteSpace(model.CachVanChuyen) ? "Giao hÃ ng tiÃªu chuáº©n" : model.CachVanChuyen,
+					CachVanChuyen = string.IsNullOrWhiteSpace(model.CachVanChuyen) ? "Giao hàng tiêu chuẩn" : model.CachVanChuyen,
 					PhiVanChuyen = shippingFee,
 					MaTrangThai = trangThaiMoi.MaTrangThai,
 					GhiChu = ghiChuThanhToan
@@ -508,7 +508,7 @@ namespace ECommerceMVC.Controllers
 				ShippingFee = order.PhiVanChuyen,
 				TotalPaid = subtotal + order.PhiVanChuyen,
 				PaymentMethod = order.CachThanhToan,
-				PaymentStatus = order.GhiChu ?? "ÄÃ£ ghi nháº­n Ä‘Æ¡n hÃ ng"
+				PaymentStatus = order.GhiChu ?? "Đã ghi nhận đơn hàng"
 			};
 
 			return View(model);
@@ -631,7 +631,7 @@ namespace ECommerceMVC.Controllers
 			}
 			catch (Exception ex)
 			{
-				logger.LogError(ex, "KhÃ´ng thá»ƒ táº£i giá» hÃ ng DB cho MaKh={MaKh}. Fallback session cart.", CurrentCustomerId);
+				logger.LogError(ex, "Không thể tải giỏ hàng DB cho MaKh={MaKh}. Fallback session cart.", CurrentCustomerId);
 				return sessionCart;
 			}
 		}
@@ -696,7 +696,7 @@ namespace ECommerceMVC.Controllers
 			}
 			catch (Exception ex)
 			{
-				logger.LogError(ex, "Lá»—i lÆ°u giá» hÃ ng cho MaKh={MaKh}.", CurrentCustomerId);
+				logger.LogError(ex, "Lỗi lưu giỏ hàng cho MaKh={MaKh}.", CurrentCustomerId);
 				errorMessage = ex.InnerException?.Message ?? ex.Message;
 				return false;
 			}
