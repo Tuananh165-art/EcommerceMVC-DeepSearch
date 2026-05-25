@@ -16,6 +16,12 @@ namespace ECommerceMVC.ViewModels
 		[MinLength(6, ErrorMessage = "Mật khẩu tối thiểu 6 ký tự")]
 		public string MatKhau { get; set; } = string.Empty;
 
+		[Display(Name = "Xác nhận mật khẩu")]
+		[Required(ErrorMessage = "Vui lòng xác nhận mật khẩu")]
+		[DataType(DataType.Password)]
+		[Compare(nameof(MatKhau), ErrorMessage = "Xác nhận mật khẩu không khớp")]
+		public string ConfirmPassword { get; set; } = string.Empty;
+
 		[Display(Name ="Họ tên")]
 		[Required(ErrorMessage = "Vui lòng nhập họ tên")]
 		[MaxLength(50, ErrorMessage = "Họ tên tối đa 50 ký tự")]

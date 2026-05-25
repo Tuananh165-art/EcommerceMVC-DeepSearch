@@ -1,167 +1,786 @@
-@model ECommerceMVC.ViewModels.RegisterVM
+﻿@model ECommerceMVC.ViewModels.RegisterVM
 @{
-    ViewData["Title"] = "Đăng Ký Thành Viên | DEEPSEARCH";
+    ViewData["Title"] = "Đăng ký thành viên | DEEPSEARCH";
 }
 
-<div class="auth-section py-5 d-flex align-items-center" style="min-height: calc(100vh - var(--navbar-height) - 100px);">
-    <div class="container py-4">
-        <div class="row justify-content-center reveal">
-            <div class="col-12 col-xl-11">
-                
-                <!-- Main Split Auth Card -->
-                <div class="glass-card g-0 overflow-hidden shadow-2xl" style="border-radius: var(--radius-xl); border: 1px solid var(--glass-border);">
-                    <div class="row g-0 align-items-stretch" style="min-height: 650px;">
-                        
-                        <!-- Left Panel (Visual Branding) - Desktop only -->
-                        <div class="col-12 col-md-4 bg-gradient d-none d-md-flex flex-column justify-content-between p-5 text-white position-relative overflow-hidden">
-                            <!-- Glow Orbs -->
-                            <div class="accent-orb" style="top: -20%; left: -20%; width: 220px; height: 220px; opacity: 0.2; filter: blur(50px); background: #FFFFFF;"></div>
-                            <div class="accent-orb" style="bottom: -20%; right: -20%; width: 220px; height: 220px; opacity: 0.15; filter: blur(50px); background: #FFFFFF;"></div>
-                            
-                            <div class="brand-header position-relative" style="z-index: 2;">
-                                <h3 class="font-heading font-weight-extrabold text-2xl tracking-wide mb-1" style="font-family: var(--font-heading);">DEEPSEARCH</h3>
-                                <div class="bg-white" style="width: 32px; height: 2px; border-radius: var(--radius-full);"></div>
+@section Styles {
+<style>
+    :root {
+        --lux-ivory: #f8f4ee;
+        --lux-beige: #efe4d3;
+        --lux-panel: #fbf8f3;
+        --lux-brown: #3f2e24;
+        --lux-brown-soft: #6a5548;
+        --lux-taupe: #b9a48f;
+        --lux-champagne: #c69a6b;
+        --lux-champagne-dark: #9f744a;
+        --lux-danger: #b14646;
+        --lux-success: #2f7d57;
+    }
+
+    .register-luxury {
+        background:
+            radial-gradient(75% 60% at 10% 8%, rgba(198, 154, 107, 0.12) 0%, transparent 65%),
+            radial-gradient(65% 55% at 95% 100%, rgba(95, 67, 47, 0.1) 0%, transparent 70%),
+            linear-gradient(180deg, #f7f2ea 0%, #f3ede4 100%);
+        min-height: calc(100vh - var(--navbar-height) - 90px);
+        padding: 40px 0;
+    }
+
+    .register-shell {
+        max-width: 1120px;
+        margin: 0 auto;
+        border-radius: 28px;
+        overflow: hidden;
+        border: 1px solid rgba(185, 164, 143, 0.55);
+        box-shadow: 0 28px 70px rgba(63, 46, 36, 0.15);
+        background: var(--lux-panel);
+    }
+
+    .register-brand {
+        position: relative;
+        min-height: 680px;
+        color: #fdf7ef;
+        padding: 48px 42px;
+        background-image:
+            linear-gradient(170deg, rgba(34, 22, 15, 0.9) 12%, rgba(58, 40, 30, 0.72) 52%, rgba(74, 50, 34, 0.58) 100%),
+            url('/Hinh/HangHoa/lux-duncan-storage-interior.jpg');
+        background-size: cover;
+        background-position: center;
+    }
+
+    .register-brand::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(150deg, rgba(20, 12, 8, 0.45), rgba(20, 12, 8, 0.12));
+    }
+
+    .register-brand > * {
+        position: relative;
+        z-index: 1;
+    }
+
+    .register-brand h2 {
+        color: #f3dfc9;
+        letter-spacing: 0.06em;
+        font-size: 2.2rem;
+    }
+
+    .register-brand .line {
+        width: 48px;
+        height: 2px;
+        border-radius: 999px;
+        background: #d8b48c;
+        margin: 10px 0 22px;
+    }
+
+    .register-brand .headline {
+        font-size: 2rem;
+        font-weight: 700;
+        line-height: 1.28;
+        margin-bottom: 18px;
+    }
+
+    .register-brand p {
+        color: rgba(251, 242, 229, 0.9);
+        max-width: 32ch;
+        line-height: 1.75;
+    }
+
+    .register-form-wrap {
+        padding: 42px;
+        background: linear-gradient(180deg, #fdfaf5 0%, #f8f2e9 100%);
+    }
+
+    .register-form-title {
+        font-size: 2rem;
+        line-height: 1.2;
+        margin-bottom: 8px;
+        color: var(--lux-brown);
+    }
+
+    .register-form-sub {
+        color: var(--lux-brown-soft);
+        margin-bottom: 24px;
+    }
+
+    .lux-form-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 16px 18px;
+    }
+
+    .lux-field {
+        display: flex;
+        flex-direction: column;
+        gap: 7px;
+    }
+
+    .lux-field-full {
+        grid-column: 1 / -1;
+    }
+
+    .lux-label {
+        color: var(--lux-brown);
+        font-weight: 600;
+        font-size: 0.92rem;
+    }
+
+    .lux-input-wrap {
+        position: relative;
+    }
+
+    .lux-input {
+        width: 100%;
+        border: 1px solid var(--lux-taupe);
+        border-radius: 14px;
+        background: #fffdfa;
+        color: #2f231b;
+        padding: 12px 14px;
+        font-size: 0.96rem;
+        transition: border-color .2s ease, box-shadow .2s ease, background-color .2s ease;
+    }
+
+    .lux-input::placeholder {
+        color: #8f7969;
+        font-weight: 400;
+        opacity: 1;
+    }
+
+    .lux-input:focus {
+        outline: none;
+        border-color: var(--lux-champagne);
+        box-shadow: 0 0 0 4px rgba(198, 154, 107, 0.24);
+        background: #fff;
+    }
+
+    .lux-input[aria-invalid="true"] {
+        border-color: var(--lux-danger);
+        box-shadow: 0 0 0 4px rgba(177, 70, 70, 0.15);
+    }
+
+    .lux-input-helper {
+        color: #79695d;
+        font-size: 0.77rem;
+        line-height: 1.45;
+    }
+
+    .lux-input-error {
+        color: var(--lux-danger);
+        font-size: 0.78rem;
+        line-height: 1.35;
+        min-height: 18px;
+    }
+
+    .password-toggle {
+        position: absolute;
+        right: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        border: 0;
+        background: transparent;
+        color: #7b6657;
+        font-size: 0.82rem;
+        font-weight: 600;
+        cursor: pointer;
+        padding: 4px 6px;
+    }
+
+    .password-toggle:focus-visible {
+        outline: 2px solid var(--lux-champagne);
+        outline-offset: 1px;
+        border-radius: 6px;
+    }
+
+    .lux-password {
+        padding-right: 58px;
+    }
+
+    .gender-segment {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+    }
+
+    .gender-card {
+        position: relative;
+    }
+
+    .gender-card input {
+        position: absolute;
+        opacity: 0;
+    }
+
+    .gender-card label {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 11px 10px;
+        border: 1px solid var(--lux-taupe);
+        border-radius: 12px;
+        background: #fffdfa;
+        color: var(--lux-brown-soft);
+        font-weight: 600;
+        cursor: pointer;
+        transition: all .2s ease;
+        margin: 0;
+    }
+
+    .gender-card input:checked + label {
+        border-color: var(--lux-champagne-dark);
+        background: linear-gradient(180deg, #f2debf 0%, #ecd1ab 100%);
+        color: #4c3728;
+        box-shadow: 0 0 0 3px rgba(198, 154, 107, 0.24);
+    }
+
+    .avatar-upload {
+        border: 1px dashed var(--lux-taupe);
+        border-radius: 14px;
+        background: #fffdf9;
+        padding: 12px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        min-height: 92px;
+    }
+
+    .avatar-preview {
+        width: 62px;
+        height: 62px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 1px solid #d6c0ab;
+        background: #f5eee5;
+    }
+
+    .avatar-actions {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    .btn-soft {
+        border: 1px solid var(--lux-taupe);
+        background: #fffaf4;
+        color: var(--lux-brown);
+        border-radius: 10px;
+        padding: 8px 12px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        cursor: pointer;
+    }
+
+    .btn-soft:hover {
+        border-color: var(--lux-champagne-dark);
+        color: #36261d;
+    }
+
+    .btn-soft-danger {
+        border-color: #d2aaa7;
+        color: #924040;
+    }
+
+    .checkbox-row {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        color: #5a4639;
+        font-size: 0.88rem;
+        margin-top: 2px;
+    }
+
+    .checkbox-row input {
+        margin-top: 3px;
+        accent-color: #8d6240;
+    }
+
+    .checkbox-row a {
+        color: #7a532f;
+        text-decoration: underline;
+    }
+
+    .lux-btn-submit {
+        width: 100%;
+        border: 0;
+        border-radius: 14px;
+        padding: 13px 16px;
+        background: linear-gradient(180deg, #cfa97f 0%, #b28458 100%);
+        color: #fffaf3;
+        font-weight: 700;
+        letter-spacing: 0.01em;
+        margin-top: 8px;
+        transition: transform .2s ease, box-shadow .2s ease, opacity .2s ease;
+        box-shadow: 0 14px 26px rgba(128, 88, 55, 0.28);
+    }
+
+    .lux-btn-submit:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 18px 30px rgba(128, 88, 55, 0.35);
+    }
+
+    .lux-btn-submit:disabled {
+        opacity: .7;
+        cursor: not-allowed;
+    }
+
+    .loading-spin {
+        width: 16px;
+        height: 16px;
+        border: 2px solid rgba(255,255,255,.35);
+        border-top-color: #fff;
+        border-radius: 50%;
+        display: inline-block;
+        animation: spin .8s linear infinite;
+        vertical-align: middle;
+        margin-right: 8px;
+    }
+
+    @@keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+
+    .register-login-link {
+        margin-top: 16px;
+        text-align: center;
+        color: #6e594b;
+    }
+
+    .register-login-link a {
+        color: #7a532f;
+        font-weight: 700;
+        text-decoration: none;
+        border-bottom: 1px solid rgba(122, 83, 47, 0.45);
+    }
+
+    .register-login-link a:hover {
+        color: #513624;
+        border-bottom-color: #513624;
+    }
+
+    .register-toast-wrap {
+        position: fixed;
+        right: 18px;
+        top: 90px;
+        z-index: 1080;
+        display: grid;
+        gap: 10px;
+    }
+
+    .register-toast {
+        border-radius: 12px;
+        padding: 12px 14px;
+        min-width: 260px;
+        max-width: 360px;
+        box-shadow: 0 10px 26px rgba(0,0,0,0.16);
+        color: #fff;
+        font-size: 0.9rem;
+    }
+
+    .register-toast.success { background: var(--lux-success); }
+    .register-toast.error { background: #9e3d3d; }
+
+    @@media (max-width: 991.98px) {
+        .register-shell { border-radius: 20px; }
+        .register-brand {
+            min-height: auto;
+            padding: 30px 26px;
+        }
+
+        .register-brand .headline {
+            font-size: 1.55rem;
+            margin-bottom: 10px;
+        }
+
+        .register-form-wrap {
+            padding: 28px 20px;
+        }
+
+        .lux-form-grid {
+            grid-template-columns: 1fr;
+            gap: 14px;
+        }
+
+        .gender-segment {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+    }
+
+    @@media (max-width: 767.98px) {
+        .register-brand {
+            display: none;
+        }
+
+        .register-luxury {
+            padding: 20px 0 30px;
+        }
+
+        .register-toast-wrap {
+            left: 14px;
+            right: 14px;
+            top: 82px;
+        }
+
+        .register-toast {
+            max-width: none;
+            min-width: 0;
+        }
+    }
+</style>
+}
+
+<div class="register-luxury">
+    <div class="container">
+        <div class="register-shell reveal">
+            <div class="row g-0">
+                <aside class="col-lg-5 register-brand d-none d-lg-flex flex-column justify-content-between">
+                    <div>
+                        <h2 class="mb-0">DEEPSEARCH</h2>
+                        <div class="line"></div>
+                    </div>
+                    <div>
+                        <div class="headline">Nơi nội thất trở thành dấu ấn sống</div>
+                        <p>Gia nhập cộng đồng thành viên để nhận ưu đãi độc quyền, theo dõi đơn hàng và tận hưởng trải nghiệm mua sắm tinh tế trong từng chi tiết.</p>
+                    </div>
+                    <small>&copy; @DateTime.Now.Year DEEPSEARCH. All rights reserved.</small>
+                </aside>
+
+                <section class="col-12 col-lg-7 register-form-wrap">
+                    <h1 class="register-form-title">Đăng ký thành viên</h1>
+                    <p class="register-form-sub">Hoàn tất thông tin dưới đây để tạo tài khoản mới.</p>
+
+                    <form asp-action="DangKy" method="post" enctype="multipart/form-data" id="registerForm" novalidate>
+                        <div asp-validation-summary="ModelOnly" class="lux-input-error lux-field-full" data-server-summary></div>
+
+                        <div class="lux-form-grid">
+                            <div class="lux-field">
+                                <label asp-for="MaKh" class="lux-label"></label>
+                                <div class="lux-input-wrap">
+                                    <input asp-for="MaKh" class="lux-input" placeholder="Ví dụ: khachhang01" autocomplete="username" aria-describedby="MaKh-helper MaKh-error" required />
+                                </div>
+                                <div class="lux-input-helper" id="MaKh-helper">3-20 ký tự, chỉ nên dùng chữ, số và dấu gạch dưới.</div>
+                                <div class="lux-input-error" id="MaKh-error"><span asp-validation-for="MaKh"></span></div>
                             </div>
-                            
-                            <div class="brand-body position-relative my-auto" style="z-index: 2;">
-                                <h4 class="font-heading font-weight-bold text-3xl mb-3" style="line-height: 1.3;">Kiến tạo tổ ấm</h4>
-                                <p class="text-white text-sm opacity-80 mb-0 leading-relaxed">Trở thành thành viên DEEPSEARCH để nhận những ưu đãi đặc quyền lên tới 20% cho đơn hàng đầu tiên, theo dõi tiến trình giao hàng, và trải nghiệm dịch vụ chăm sóc tốt nhất.</p>
-                            </div>
-                            
-                            <div class="brand-footer position-relative text-xs opacity-60" style="z-index: 2;">
-                                &copy; @DateTime.Now.Year DEEPSEARCH. All rights reserved.
-                            </div>
-                        </div>
 
-                        <!-- Right Panel (Register Form) -->
-                        <div class="col-12 col-md-8 p-4 p-sm-5 d-flex flex-column justify-content-center bg-card">
-                            <div class="form-header mb-4 text-center text-md-start">
-                                <h2 class="font-heading text-2xl mb-1 text-primary">Đăng ký thành viên</h2>
-                                <p class="text-secondary text-sm mb-0">Hoàn thành mẫu đăng ký dưới đây để tạo tài khoản mới</p>
+                            <div class="lux-field">
+                                <label asp-for="NgaySinh" class="lux-label"></label>
+                                <div class="lux-input-wrap">
+                                    <input asp-for="NgaySinh" type="date" class="lux-input" aria-describedby="NgaySinh-helper NgaySinh-error" required />
+                                </div>
+                                <div class="lux-input-helper" id="NgaySinh-helper">Bạn cần từ 13 tuổi trở lên để đăng ký.</div>
+                                <div class="lux-input-error" id="NgaySinh-error"><span asp-validation-for="NgaySinh"></span></div>
                             </div>
 
-                            <form asp-action="DangKy" method="post" enctype="multipart/form-data" class="needs-validation">
-                                <div asp-validation-summary="ModelOnly" class="alert alert-danger border-0 text-sm p-3 mb-3" style="border-radius: var(--radius-md);"></div>
+                            <div class="lux-field">
+                                <label asp-for="MatKhau" class="lux-label"></label>
+                                <div class="lux-input-wrap">
+                                    <input asp-for="MatKhau" type="password" class="lux-input lux-password" placeholder="Tối thiểu 6 ký tự" autocomplete="new-password" aria-describedby="MatKhau-helper MatKhau-error" required />
+                                    <button type="button" class="password-toggle" data-toggle-password="MatKhau" aria-label="Hiện hoặc ẩn mật khẩu">Hiện</button>
+                                </div>
+                                <div class="lux-input-helper" id="MatKhau-helper">Nên có chữ hoa, chữ thường và số để tăng bảo mật.</div>
+                                <div class="lux-input-error" id="MatKhau-error"><span asp-validation-for="MatKhau"></span></div>
+                            </div>
 
-                                <div class="row g-3">
-                                    <!-- Username -->
-                                    <div class="col-12 col-sm-6">
-                                        <label asp-for="MaKh" class="form-label text-xs text-secondary font-weight-semibold">Tên đăng nhập</label>
-                                        <div class="input-group">
-                                            <span class="input-group-text bg-secondary border-color"><i data-icon="user" data-size="16px"></i></span>
-                                            <input asp-for="MaKh" class="form-control bg-secondary border-color" placeholder="Ví dụ: khachhang01" required style="border-radius: 0 var(--radius-md) var(--radius-md) 0;" />
-                                        </div>
-                                        <span asp-validation-for="MaKh" class="text-danger text-xs mt-1 d-block"></span>
+                            <div class="lux-field">
+                                <label asp-for="ConfirmPassword" class="lux-label"></label>
+                                <div class="lux-input-wrap">
+                                    <input asp-for="ConfirmPassword" type="password" class="lux-input lux-password" placeholder="Nhập lại mật khẩu" autocomplete="new-password" aria-describedby="ConfirmPassword-helper ConfirmPassword-error" required />
+                                    <button type="button" class="password-toggle" data-toggle-password="ConfirmPassword" aria-label="Hiện hoặc ẩn xác nhận mật khẩu">Hiện</button>
+                                </div>
+                                <div class="lux-input-helper" id="ConfirmPassword-helper">Cần trùng khớp 100% với mật khẩu ở trên.</div>
+                                <div class="lux-input-error" id="ConfirmPassword-error"><span asp-validation-for="ConfirmPassword"></span></div>
+                            </div>
+
+                            <div class="lux-field">
+                                <label asp-for="HoTen" class="lux-label"></label>
+                                <div class="lux-input-wrap">
+                                    <input asp-for="HoTen" class="lux-input" placeholder="Nguyễn Văn A" autocomplete="name" aria-describedby="HoTen-error" required />
+                                </div>
+                                <div class="lux-input-error" id="HoTen-error"><span asp-validation-for="HoTen"></span></div>
+                            </div>
+
+                            <div class="lux-field">
+                                <label asp-for="DienThoai" class="lux-label"></label>
+                                <div class="lux-input-wrap">
+                                    <input asp-for="DienThoai" type="tel" class="lux-input" placeholder="0901234567" autocomplete="tel" aria-describedby="DienThoai-helper DienThoai-error" required />
+                                </div>
+                                <div class="lux-input-helper" id="DienThoai-helper">Định dạng hợp lệ: 10 số và bắt đầu bằng số 0.</div>
+                                <div class="lux-input-error" id="DienThoai-error"><span asp-validation-for="DienThoai"></span></div>
+                            </div>
+
+                            <div class="lux-field">
+                                <label asp-for="Email" class="lux-label"></label>
+                                <div class="lux-input-wrap">
+                                    <input asp-for="Email" type="email" class="lux-input" placeholder="example@mail.com" autocomplete="email" aria-describedby="Email-helper Email-error" required />
+                                </div>
+                                <div class="lux-input-helper" id="Email-helper">Dùng email bạn đang hoạt động để nhận thông báo đơn hàng.</div>
+                                <div class="lux-input-error" id="Email-error"><span asp-validation-for="Email"></span></div>
+                            </div>
+
+                            <div class="lux-field">
+                                <label asp-for="DiaChi" class="lux-label"></label>
+                                <div class="lux-input-wrap">
+                                    <input asp-for="DiaChi" class="lux-input" placeholder="Số nhà, phường/xã, quận/huyện, tỉnh/thành" autocomplete="street-address" aria-describedby="DiaChi-error" required />
+                                </div>
+                                <div class="lux-input-error" id="DiaChi-error"><span asp-validation-for="DiaChi"></span></div>
+                            </div>
+
+                            <div class="lux-field">
+                                <label asp-for="AdminSecretCode" class="lux-label"></label>
+                                <div class="lux-input-wrap">
+                                    <input asp-for="AdminSecretCode" type="password" class="lux-input lux-password" placeholder="Để trống nếu đăng ký tài khoản thường" aria-describedby="AdminSecretCode-error" />
+                                    <button type="button" class="password-toggle" data-toggle-password="AdminSecretCode" aria-label="Hiện hoặc ẩn mã admin">Hiện</button>
+                                </div>
+                                <div class="lux-input-error" id="AdminSecretCode-error"><span asp-validation-for="AdminSecretCode"></span></div>
+                            </div>
+
+                            <div class="lux-field">
+                                <span class="lux-label">Giới tính</span>
+                                <div class="gender-segment" role="radiogroup" aria-label="Giới tính">
+                                    <div class="gender-card">
+                                        <input type="radio" name="GioiTinh" id="gender-male" value="true" @(Model?.GioiTinh != false ? "checked" : null) />
+                                        <label for="gender-male">Nam</label>
                                     </div>
-
-                                    <!-- Password -->
-                                    <div class="col-12 col-sm-6">
-                                        <label asp-for="MatKhau" class="form-label text-xs text-secondary font-weight-semibold">Mật khẩu</label>
-                                        <div class="input-group">
-                                            <span class="input-group-text bg-secondary border-color"><i data-icon="lock" data-size="16px"></i></span>
-                                            <input asp-for="MatKhau" type="password" class="form-control bg-secondary border-color" placeholder="••••••••" required style="border-radius: 0 var(--radius-md) var(--radius-md) 0;" />
-                                        </div>
-                                        <span asp-validation-for="MatKhau" class="text-danger text-xs mt-1 d-block"></span>
-                                    </div>
-
-                                    <!-- Full Name -->
-                                    <div class="col-12 col-sm-6">
-                                        <label asp-for="HoTen" class="form-label text-xs text-secondary font-weight-semibold">Họ và tên</label>
-                                        <div class="input-group">
-                                            <span class="input-group-text bg-secondary border-color"><i data-icon="edit" data-size="16px"></i></span>
-                                            <input asp-for="HoTen" class="form-control bg-secondary border-color" placeholder="Nguyễn Văn A" required style="border-radius: 0 var(--radius-md) var(--radius-md) 0;" />
-                                        </div>
-                                        <span asp-validation-for="HoTen" class="text-danger text-xs mt-1 d-block"></span>
-                                    </div>
-
-                                    <!-- Date of Birth -->
-                                    <div class="col-12 col-sm-6">
-                                        <label asp-for="NgaySinh" class="form-label text-xs text-secondary font-weight-semibold">Ngày sinh</label>
-                                        <div class="input-group">
-                                            <span class="input-group-text bg-secondary border-color"><i data-icon="clock" data-size="16px"></i></span>
-                                            <input asp-for="NgaySinh" type="date" class="form-control bg-secondary border-color" required style="border-radius: 0 var(--radius-md) var(--radius-md) 0;" />
-                                        </div>
-                                        <span asp-validation-for="NgaySinh" class="text-danger text-xs mt-1 d-block"></span>
-                                    </div>
-
-                                    <!-- Phone -->
-                                    <div class="col-12 col-sm-6">
-                                        <label asp-for="DienThoai" class="form-label text-xs text-secondary font-weight-semibold">Số điện thoại</label>
-                                        <div class="input-group">
-                                            <span class="input-group-text bg-secondary border-color"><i data-icon="phone" data-size="16px"></i></span>
-                                            <input asp-for="DienThoai" type="tel" class="form-control bg-secondary border-color" placeholder="0901234567" required style="border-radius: 0 var(--radius-md) var(--radius-md) 0;" />
-                                        </div>
-                                        <span asp-validation-for="DienThoai" class="text-danger text-xs mt-1 d-block"></span>
-                                    </div>
-
-                                    <!-- Email -->
-                                    <div class="col-12 col-sm-6">
-                                        <label asp-for="Email" class="form-label text-xs text-secondary font-weight-semibold">Địa chỉ Email</label>
-                                        <div class="input-group">
-                                            <span class="input-group-text bg-secondary border-color"><i data-icon="mail" data-size="16px"></i></span>
-                                            <input asp-for="Email" type="email" class="form-control bg-secondary border-color" placeholder="example@mail.com" required style="border-radius: 0 var(--radius-md) var(--radius-md) 0;" />
-                                        </div>
-                                        <span asp-validation-for="Email" class="text-danger text-xs mt-1 d-block"></span>
-                                    </div>
-
-                                    <div class="col-12 col-sm-6">
-                                        <label asp-for="AdminSecretCode" class="form-label text-xs text-secondary font-weight-semibold">Mã bảo mật admin (nếu có)</label>
-                                        <div class="input-group">
-                                            <span class="input-group-text bg-secondary border-color"><i data-icon="shield" data-size="16px"></i></span>
-                                            <input asp-for="AdminSecretCode" type="password" class="form-control bg-secondary border-color" placeholder="Để trống nếu đăng ký tài khoản thường" style="border-radius: 0 var(--radius-md) var(--radius-md) 0;" />
-                                        </div>
-                                        <span asp-validation-for="AdminSecretCode" class="text-danger text-xs mt-1 d-block"></span>
-                                    </div>
-
-                                    <!-- Address -->
-                                    <div class="col-12 col-sm-6">
-                                        <label asp-for="DiaChi" class="form-label text-xs text-secondary font-weight-semibold">Địa chỉ</label>
-                                        <div class="input-group">
-                                            <span class="input-group-text bg-secondary border-color"><i data-icon="pin" data-size="16px"></i></span>
-                                            <input asp-for="DiaChi" class="form-control bg-secondary border-color" placeholder="Số 1 Đại Cồ Việt, Hai Bà Trưng, Hà Nội" required style="border-radius: 0 var(--radius-md) var(--radius-md) 0;" />
-                                        </div>
-                                        <span asp-validation-for="DiaChi" class="text-danger text-xs mt-1 d-block"></span>
-                                    </div>
-
-                                    <!-- Avatar Image -->
-                                    <div class="col-12 col-sm-6">
-                                        <label for="Hinh" class="form-label text-xs text-secondary font-weight-semibold">Hình đại diện</label>
-                                        <div class="input-group">
-                                            <span class="input-group-text bg-secondary border-color"><i data-icon="image" data-size="16px"></i></span>
-                                            <input type="file" name="Hinh" class="form-control bg-secondary border-color" style="border-radius: 0 var(--radius-md) var(--radius-md) 0;" />
-                                        </div>
-                                    </div>
-
-                                    <!-- Gender Switch -->
-                                    <div class="col-12 col-sm-6 d-flex align-items-center mt-4">
-                                        <div class="form-check form-switch d-flex align-items-center gap-2">
-                                            <input asp-for="GioiTinh" class="form-check-input accent-primary cursor-pointer" type="checkbox" style="width: 40px; height: 20px;" />
-                                            <label class="form-check-label text-sm text-secondary cursor-pointer mb-0" asp-for="GioiTinh">Giới tính: Nam</label>
-                                        </div>
+                                    <div class="gender-card">
+                                        <input type="radio" name="GioiTinh" id="gender-female" value="false" @(Model?.GioiTinh == false ? "checked" : null) />
+                                        <label for="gender-female">Nữ</label>
                                     </div>
                                 </div>
+                                <div class="lux-input-helper">Bạn có thể cập nhật lại giới tính trong hồ sơ sau khi đăng ký.</div>
+                            </div>
 
-                                <!-- Submit CTA -->
-                                <button type="submit" class="btn btn-gradient w-100 py-3 d-flex align-items-center justify-content-center gap-2 shadow-glow hover-shadow-glow mt-4 mb-3" style="border-radius: var(--radius-md);" data-click-notify="Đang khởi tạo tài khoản mới...">
-                                    Đăng ký thành viên
+                            <div class="lux-field">
+                                <span class="lux-label">Ảnh đại diện</span>
+                                <div class="avatar-upload">
+                                    <img src="/Hinh/KhachHang/default-avatar.svg" alt="Xem trước ảnh đại diện" class="avatar-preview" id="avatarPreview" />
+                                    <div>
+                                        <div class="avatar-actions">
+                                            <button type="button" class="btn-soft" id="chooseAvatarBtn">Chọn ảnh</button>
+                                            <button type="button" class="btn-soft btn-soft-danger" id="removeAvatarBtn">Xóa ảnh</button>
+                                        </div>
+                                        <div class="lux-input-helper mt-2">JPG, PNG, WEBP, GIF. Tối đa 5MB.</div>
+                                    </div>
+                                </div>
+                                <input type="file" name="Hinh" id="Hinh" accept="image/*" class="d-none" aria-label="Chọn ảnh đại diện" />
+                            </div>
+
+                            <div class="lux-field lux-field-full">
+                                <label class="checkbox-row" for="termsAgree">
+                                    <input type="checkbox" id="termsAgree" required aria-describedby="terms-error" />
+                                    <span>Tôi đồng ý với <a href="#" aria-label="Điều khoản sử dụng">Điều khoản sử dụng</a> và <a href="#" aria-label="Chính sách bảo mật">Chính sách bảo mật</a>.</span>
+                                </label>
+                                <div id="terms-error" class="lux-input-error"></div>
+                            </div>
+
+                            <div class="lux-field lux-field-full">
+                                <button type="submit" class="lux-btn-submit" id="submitRegisterBtn">
+                                    <span data-submit-text>Đăng ký thành viên</span>
                                 </button>
-                            </form>
-
-                            <!-- Sign up anchor -->
-                            <div class="text-center mt-2">
-                                <span class="text-secondary text-sm">Đã có tài khoản?</span>
-                                <a asp-action="DangNhap" asp-controller="KhachHang" class="text-gradient font-weight-bold text-sm hover-primary transition-base ms-1">Đăng nhập</a>
                             </div>
                         </div>
+                    </form>
 
+                    <div class="register-login-link">
+                        Đã có tài khoản? <a asp-action="DangNhap" asp-controller="KhachHang">Đăng nhập ngay</a>
                     </div>
-                </div>
-
+                </section>
             </div>
         </div>
     </div>
 </div>
 
+<div class="register-toast-wrap" id="registerToastWrap" aria-live="polite" aria-atomic="true"></div>
+
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script>
+        (function () {
+            const form = document.getElementById('registerForm');
+            if (!form) return;
+
+            const toastWrap = document.getElementById('registerToastWrap');
+            const submitBtn = document.getElementById('submitRegisterBtn');
+            const submitText = submitBtn.querySelector('[data-submit-text]');
+            const fileInput = document.getElementById('Hinh');
+            const avatarPreview = document.getElementById('avatarPreview');
+            const chooseAvatarBtn = document.getElementById('chooseAvatarBtn');
+            const removeAvatarBtn = document.getElementById('removeAvatarBtn');
+            const termsAgree = document.getElementById('termsAgree');
+            const termsError = document.getElementById('terms-error');
+
+            const fields = {
+                MaKh: {
+                    input: document.getElementById('MaKh'),
+                    error: document.getElementById('MaKh-error'),
+                    validate: (v) => {
+                        if (!v) return 'Vui lòng nhập tên đăng nhập.';
+                        if (v.length < 3 || v.length > 20) return 'Tên đăng nhập cần từ 3 đến 20 ký tự.';
+                        if (!/^[a-zA-Z0-9_]+$/.test(v)) return 'Chỉ dùng chữ, số và dấu gạch dưới.';
+                        return '';
+                    }
+                },
+                Email: {
+                    input: document.getElementById('Email'),
+                    error: document.getElementById('Email-error'),
+                    validate: (v) => {
+                        if (!v) return 'Vui lòng nhập email.';
+                        if (!/^[^\s@@]+@@[^\s@@]+\.[^\s@@]+$/.test(v)) return 'Email chưa đúng định dạng.';
+                        return '';
+                    }
+                },
+                DienThoai: {
+                    input: document.getElementById('DienThoai'),
+                    error: document.getElementById('DienThoai-error'),
+                    validate: (v) => {
+                        if (!v) return 'Vui lòng nhập số điện thoại.';
+                        if (!/^0\d{9}$/.test(v)) return 'Số điện thoại phải gồm 10 số và bắt đầu bằng số 0.';
+                        return '';
+                    }
+                },
+                MatKhau: {
+                    input: document.getElementById('MatKhau'),
+                    error: document.getElementById('MatKhau-error'),
+                    validate: (v) => {
+                        if (!v) return 'Vui lòng nhập mật khẩu.';
+                        if (v.length < 6) return 'Mật khẩu tối thiểu 6 ký tự.';
+                        return '';
+                    }
+                },
+                ConfirmPassword: {
+                    input: document.getElementById('ConfirmPassword'),
+                    error: document.getElementById('ConfirmPassword-error'),
+                    validate: (v) => {
+                        const password = document.getElementById('MatKhau').value.trim();
+                        if (!v) return 'Vui lòng xác nhận mật khẩu.';
+                        if (v !== password) return 'Xác nhận mật khẩu không khớp.';
+                        return '';
+                    }
+                },
+                NgaySinh: {
+                    input: document.getElementById('NgaySinh'),
+                    error: document.getElementById('NgaySinh-error'),
+                    validate: (v) => {
+                        if (!v) return 'Vui lòng chọn ngày sinh.';
+                        const selected = new Date(v + 'T00:00:00');
+                        const now = new Date();
+                        const minAgeDate = new Date(now.getFullYear() - 13, now.getMonth(), now.getDate());
+                        if (selected > minAgeDate) return 'Bạn cần từ 13 tuổi trở lên.';
+                        return '';
+                    }
+                }
+            };
+
+            function showToast(message, type) {
+                const toast = document.createElement('div');
+                toast.className = `register-toast ${type}`;
+                toast.textContent = message;
+                toastWrap.appendChild(toast);
+                setTimeout(() => {
+                    toast.remove();
+                }, 3600);
+            }
+
+            function setFieldError(input, errorEl, message) {
+                input.setAttribute('aria-invalid', message ? 'true' : 'false');
+                if (errorEl) {
+                    errorEl.textContent = message;
+                }
+            }
+
+            function validateField(fieldName) {
+                const field = fields[fieldName];
+                if (!field || !field.input) return true;
+                const value = field.input.value.trim();
+                const message = field.validate(value);
+                setFieldError(field.input, field.error, message);
+                return !message;
+            }
+
+            Object.keys(fields).forEach((key) => {
+                const field = fields[key];
+                if (!field.input) return;
+                field.input.addEventListener('input', () => {
+                    validateField(key);
+                    if (key === 'MatKhau') {
+                        validateField('ConfirmPassword');
+                    }
+                });
+                field.input.addEventListener('blur', () => validateField(key));
+            });
+
+            document.querySelectorAll('[data-toggle-password]').forEach((btn) => {
+                btn.addEventListener('click', () => {
+                    const targetId = btn.getAttribute('data-toggle-password');
+                    const input = document.getElementById(targetId);
+                    if (!input) return;
+                    const isPwd = input.type === 'password';
+                    input.type = isPwd ? 'text' : 'password';
+                    btn.textContent = isPwd ? 'Ẩn' : 'Hiện';
+                });
+            });
+
+            chooseAvatarBtn.addEventListener('click', () => fileInput.click());
+            fileInput.addEventListener('change', () => {
+                const file = fileInput.files && fileInput.files[0];
+                if (!file) return;
+                const maxSize = 5 * 1024 * 1024;
+                if (!file.type.startsWith('image/')) {
+                    showToast('Vui lòng chọn file ảnh hợp lệ.', 'error');
+                    fileInput.value = '';
+                    return;
+                }
+                if (file.size > maxSize) {
+                    showToast('Ảnh vượt quá dung lượng 5MB.', 'error');
+                    fileInput.value = '';
+                    return;
+                }
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    avatarPreview.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            });
+
+            removeAvatarBtn.addEventListener('click', () => {
+                fileInput.value = '';
+                avatarPreview.src = '/Hinh/KhachHang/default-avatar.svg';
+            });
+
+            form.addEventListener('submit', function (event) {
+                let isValid = true;
+
+                Object.keys(fields).forEach((key) => {
+                    if (!validateField(key)) {
+                        isValid = false;
+                    }
+                });
+
+                if (!termsAgree.checked) {
+                    termsError.textContent = 'Bạn cần đồng ý Điều khoản sử dụng và Chính sách bảo mật.';
+                    isValid = false;
+                } else {
+                    termsError.textContent = '';
+                }
+
+                if (!isValid) {
+                    event.preventDefault();
+                    showToast('Vui lòng kiểm tra lại thông tin đăng ký.', 'error');
+                    return;
+                }
+
+                submitBtn.disabled = true;
+                submitText.innerHTML = '<span class="loading-spin"></span>Đang tạo tài khoản...';
+            });
+
+            const hasServerErrors = !!form.querySelector('[data-valmsg-summary="true"] li, .input-validation-error, .field-validation-error');
+            if (hasServerErrors) {
+                showToast('Đăng ký chưa thành công. Vui lòng kiểm tra lại biểu mẫu.', 'error');
+            }
+
+            const flashSuccess = '@(TempData["SuccessMessage"]?.ToString() ?? string.Empty)';
+            if (flashSuccess) {
+                showToast(flashSuccess, 'success');
+            }
+        })();
+    </script>
 }
