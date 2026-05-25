@@ -1,0 +1,9 @@
+**/bin/
+**/obj/
+**/.vs/
+**/.vscode/
+**/artifacts/
+**/node_modules/
+*.user
+*.suo
+*.log
