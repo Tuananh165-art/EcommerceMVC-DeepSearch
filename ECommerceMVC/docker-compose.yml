@@ -1,0 +1,87 @@
+# ===========================================================
+# Docker Compose V2 — ECommerceMVC + SQL Server
+# ===========================================================
+# Ports used on server:
+#   8080 -> Web app (avoiding 80, 443, 3001, 8081, 5000)
+#   1434 -> SQL Server (avoiding 1433 — already in use)
+# ===========================================================
+
+services:
+
+  # ---------------------------------------------------------
+  # SQL Server 2022 — Database
+  # ---------------------------------------------------------
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: ecommerce-sqlserver
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "${SA_PASSWORD:-YourStrong@Passw0rd}"
+      MSSQL_PID: Developer
+    ports:
+      - "${SQL_HOST_PORT:-1434}:1433"
+    env_file:
+      - .env
+    volumes:
+      - sqlserver_data:/var/opt/mssql
+      # Mount ALL SQL init scripts (read-only)
+      - ./HShopScript.sql:/init-scripts/01-HShopScript.sql:ro
+      - ./seed_hshop2023.sql:/init-scripts/02-seed.sql:ro
+      - ./fix_mojibake_vietnamese.sql:/init-scripts/03-fix-mojibake.sql:ro
+      - ./fix_remaining_vietnamese.sql:/init-scripts/04-fix-remaining.sql:ro
+      - ./patch_favorite_unique_index.sql:/init-scripts/05-patch-fav.sql:ro
+      - ./patch_persistent_cart.sql:/init-scripts/06-patch-cart.sql:ro
+      - ./patch_password_reset_otp.sql:/init-scripts/07-patch-otp.sql:ro
+      - ./patch_shop_filters_newsletter.sql:/init-scripts/08-patch-shop.sql:ro
+      - ./phase4_test_accounts.sql:/init-scripts/09-test-accounts.sql:ro
+      - ./reset_sample_hshop2023.sql:/init-scripts/10-reset-sample.sql:ro
+      # Mount custom init orchestrator
+      - ./docker-init-db.sh:/docker-entrypoint-initdb.d/run-init.sh:ro
+    healthcheck:
+      test: ["CMD", "/opt/mssql-tools18/bin/sqlcmd", "-S", "localhost", "-U", "sa", "-P", "${SA_PASSWORD:-YourStrong@Passw0rd}", "-C", "-Q", "SELECT 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+    networks:
+      - ecommerce-net
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+
+  # ---------------------------------------------------------
+  # ECommerceMVC — ASP.NET 8 Web App
+  # ---------------------------------------------------------
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ecommerce-web
+    ports:
+      - "${WEB_HOST_PORT:-8080}:8080"
+    env_file:
+      - .env
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      # Docker internal DNS resolves 'sqlserver' to the db container
+      DB_CONNECTION_STRING: "Server=sqlserver,1433;Database=Hshop2023;User Id=sa;Password=${SA_PASSWORD:-YourStrong@Passw0rd};TrustServerCertificate=True;Encrypt=False;"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - ecommerce-net
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+
+networks:
+  ecommerce-net:
+    driver: bridge
+
+volumes:
+  sqlserver_data:
+    driver: local

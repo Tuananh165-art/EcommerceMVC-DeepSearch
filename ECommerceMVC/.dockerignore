@@ -1,0 +1,37 @@
+# Build artifacts
+bin/
+obj/
+bin_temp/
+artifacts/
+*.nuspec
+*.nupkg
+
+# IDE
+.vs/
+.vscode/
+*.user
+*.suo
+*.userprefs
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Env files with secrets
+.env
+
+# Git
+.git/
+.gitignore
+
+# Docker
+Dockerfile
+docker-compose*.yml
+.dockerignore
+
+# Resources (mounted separately, not baked into image)
+Resources/
+
+# Logs
+logs/
+*.log

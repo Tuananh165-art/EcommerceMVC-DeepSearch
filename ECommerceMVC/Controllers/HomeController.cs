@@ -29,7 +29,7 @@ namespace ECommerceMVC.Controllers
 					DiemDanhGia = (int)Math.Round(g.Average(x => x.SoSao), MidpointRounding.AwayFromZero)
 				});
 
-			var products = _db.HangHoas
+				var products = _db.HangHoas
 				.Include(x => x.MaLoaiNavigation)
 				.GroupJoin(
 					ratingQuery,

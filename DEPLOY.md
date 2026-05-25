@@ -1,280 +1,240 @@
-# HShop ECommerceMVC — Hướng dẫn Deploy Docker lên Server
+# Deploy ECommerceMVC Len Production Server (157.66.46.69)
 
-## Port Mapping (đã tránh port đang dùng trên server)
-
-| Service      | Host Port | Container Port | Ghi chú                          |
-|-------------|-----------|----------------|----------------------------------|
-| SQL Server  | 1434      | 1433           | Server đã có 1433 (instance cũ) |
-| Web App     | 8080      | 8080           | Server đã có 80, 443, 8081      |
-
-**Port trên server đang dùng (TRÁNH):**
-- `80, 443` — nginx
-- `22` — sshd
-- `1433` — SQL Server cũ
-- `3001` — Next.js
-- `5433` — PostgreSQL
-- `8081` — Node.js
+## Tong quan
+- **Web app**: http://157.66.46.69:8080
+- **SQL Server**: 157.66.46.69:1434
+- **Ports da tranh**: 80, 443 (nginx), 22 (sshd), 1433 (SQL Server cu), 3001 (next), 8081 (node), 5000 (dotnet localhost)
 
 ---
 
-## Cách 1: Deploy tự động bằng script (khuyên dùng)
+## Buoc 1: Chuan bi tren Windows (local)
 
-### Bước 1: Upload source code lên server
+### 1.1 Kiem tra cac file da co san
+Trong `F:\ECommerceMVC\ECommerceMVC\` phai co:
+- `Dockerfile` — multi-stage build cho ASP.NET 8
+- `docker-compose.yml` — SQL Server + Web app
+- `docker-init-db.sh` — script khoi tao database
+- `.dockerignore` — loai bo file khong can thiet
+- `.env.production.example` — mau bien moi truong
+- `HShopScript.sql` + cac file `*.sql` khac — schema va du lieu
 
-Từ máy local (Windows, Git Bash):
-
-```bash
-# Upload toàn bộ project lên server
-scp -r /f/ECommerceMVC root@157.66.46.69:/root/ECommerceMVC
-```
-
-Hoặc dùng WinSCP / MobaXterm file transfer.
-
-### Bước 2: SSH vào server
-
-```bash
-ssh root@157.66.46.69
-cd /root/ECommerceMVC
-```
-
-### Bước 3: Tạo file .env với secrets thật
+### 1.2 Chuan bi file .env tren server
+Copy `.env.production.example` thanh `.env` va dien secret that:
 
 ```bash
-# Copy template
-cp .env.production.template .env
-
-# Chỉnh sửa — ĐẶC BIỆT thay đổi password và API keys
-nano .env
-```
-
-**Bắt buộc thay đổi:**
-- `SA_PASSWORD` — password mạnh cho SQL Server
-- `DB_CONNECTION_STRING` — phải khớp SA_PASSWORD ở trên
-- `EMAIL_SMTP_USER`, `EMAIL_SMTP_PASSWORD` — SMTP thật
-- `VNPAY_TMNCODE`, `VNPAY_HASH_SECRET` — VNPay sandbox keys
-- `MOMO_PARTNER_CODE`, `MOMO_ACCESS_KEY`, `MOMO_SECRET_KEY` — MoMo keys
-- `ADMIN_SECRET_CODE` — secret code cho admin panel
-
-### Bước 4: Chạy deploy script
-
-```bash
-chmod +x deploy.sh
-./deploy.sh
-```
-
-Script sẽ tự động:
-1. Kiểm tra Docker/docker-compose
-2. Validate .env
-3. Build images
-4. Stop containers cũ (nếu có)
-5. Start services mới
-6. Wait cho SQL Server healthy
-
-### Bước 5: Kiểm tra
-
-```bash
-# Xem trạng thái containers
-docker compose ps
-
-# Xem log web app
-docker compose logs -f web
-
-# Test web app
-curl -I http://localhost:8080
-
-# Từ máy local, mở trình duyệt:
-# http://157.66.46.69:8080
+# Tren local, tao file .env de deploy:
+cd F:\ECommerceMVC\ECommerceMVC
+copy .env.production.example .env
+# CHINH SUA .env voi SMTP password that, VNPay secret that, etc.
 ```
 
 ---
 
-## Cách 2: Deploy thủ công (từng bước)
+## Buoc 2: Upload len Server
 
-### Bước 1: Cài Docker trên server (nếu chưa có)
-
-```bash
-# Ubuntu/Debian
-curl -fsSL https://get.docker.com | sh
-systemctl enable docker
-systemctl start docker
-
-# Cài docker compose plugin
-apt install -y docker-compose-plugin
-```
-
-### Bước 2: Upload source code
-
-```bash
-# Từ local
-scp -r /f/ECommerceMVC root@157.66.46.69:/root/ECommerceMVC
-```
-
-### Bước 3: SSH và chuẩn bị .env
-
+### 2.1 SSH vao server
 ```bash
 ssh root@157.66.46.69
-cd /root/ECommerceMVC
-cp .env.production.template .env
-nano .env  # Điền secrets thật
 ```
 
-### Bước 4: Build và chạy
-
+### 2.2 Tao thu muc tren server
 ```bash
-# Build images
-docker compose build --no-cache
+mkdir -p /opt/ecommerce
+cd /opt/ecommerce
+```
 
-# Dọn containers cũ
-docker compose down --remove-orphans
+### 2.3 Upload tu Windows (dung Git Bash / MobaXterm scp)
+```bash
+# Tu Git Bash tren Windows:
+scp -r /f/ECommerceMVC/ECommerceMVC/* root@157.66.46.69:/opt/ecommerce/
+# Hoac scp file .env rieng (vi no da bi .dockerignore loai):
+scp /f/ECommerceMVC/ECommerceMVC/.env root@157.66.46.69:/opt/ecommerce/
+```
 
-# Start
-docker compose up -d
+### 2.4 Kiem tra tren server
+```bash
+ssh root@157.66.46.69
+cd /opt/ecommerce
+ls -la Dockerfile docker-compose.yml docker-init-db.sh .env HShopScript.sql
+```
 
-# Xem logs
+---
+
+## Buoc 3: Build va Deploy
+
+### 3.1 Kiem tra Docker Compose V2
+```bash
+docker compose version
+# Neu bao loi "docker-compose: command not found" -> dung "docker compose" (V2)
+# Neu can cai: apt install docker-compose-plugin
+```
+
+### 3.2 Build va chay (lan dau)
+```bash
+cd /opt/ecommerce
+docker compose up -d --build
+```
+
+Lenh nay se:
+1. Build ASP.NET image tu Dockerfile (phai mat ~2-5 phut)
+2. Pull SQL Server 2022 image
+3. Khoi dong SQL Server container
+4. Chay docker-init-db.sh de tao DB Hshop2023 + chay 10 SQL scripts
+5. Khoi dong Web app container (doi SQL Server healthy)
+
+### 3.3 Theo doi logs
+```bash
+# Xem tat ca logs:
 docker compose logs -f
-```
 
----
-
-## Cập nhật code (redeploy)
-
-Khi có code mới, chỉ cần:
-
-```bash
-ssh root@157.66.46.69
-cd /root/ECommerceMVC
-
-# Pull code mới (nếu dùng git)
-git pull
-
-# Hoặc upload lại từ local
-# scp -r /f/ECommerceMVC/* root@157.66.46.69:/root/ECommerceMVC/
-
-# Build lại và restart
-docker compose build --no-cache
-docker compose up -d --force-recreate
-
-# Hoặc dùng script
-./deploy.sh
-```
-
----
-
-## Quản lý containers
-
-```bash
-# Xem trạng thái
-docker compose ps
-
-# Xem logs realtime
+# Chi xem web app:
 docker compose logs -f web
+
+# Chi xem SQL Server:
 docker compose logs -f sqlserver
+```
 
-# Restart 1 service
+### 3.4 Kiem tra trang thai
+```bash
+docker compose ps
+# Ket qua mong doi:
+# NAME                 STATUS
+# ecommerce-sqlserver  Up (healthy)
+# ecommerce-web        Up
+```
+
+---
+
+## Buoc 4: Verify
+
+### 4.1 Kiem tra Web app
+```bash
+curl -I http://localhost:8080
+# Mong doi: HTTP/1.1 200 OK
+
+# Hoac tu browser: http://157.66.46.69:8080
+```
+
+### 4.2 Kiem tra SQL Server
+```bash
+docker exec ecommerce-sqlserver /opt/mssql-tools18/bin/sqlcmd \
+  -S localhost -U sa -P "YourStrong@Passw0rd" -C \
+  -Q "SELECT name FROM sys.databases WHERE name = 'Hshop2023'"
+
+# Kiem tra so luong san pham:
+docker exec ecommerce-sqlserver /opt/mssql-tools18/bin/sqlcmd \
+  -S localhost -U sa -P "YourStrong@Passw0rd" -C -d Hshop2023 \
+  -Q "SELECT COUNT(*) AS ProductCount FROM dbo.HangHoa"
+```
+
+### 4.3 Kiem tra ket noi giua Web va SQL
+```bash
+docker logs ecommerce-web 2>&1 | grep -i "error\|exception" || echo "Khong co loi"
+```
+
+---
+
+## Buoc 5: Cau hinh them (tuy chon)
+
+### 5.1 VNPay Production
+Neu dung VNPay that (khong phai sandbox), cap nhat trong `.env`:
+```
+VNPAY_TMNCODE=...
+VNPAY_HASH_SECRET=...
+VNPAY_PAYMENT_URL=https://pay.vnpayment.vn/vpcpay.html
+VNPAY_RETURN_URL=http://157.66.46.69:8080/cart/vnpay-return
+VNPAY_IPN_URL=http://157.66.46.69:8080/cart/vnpay-ipn
+```
+Roi restart: `docker compose restart web`
+
+### 5.2 Nginx Reverse Proxy (tuy chon)
+Neu muon dung https qua nginx, them vao nginx config:
+```nginx
+server {
+    listen 80;
+    server_name yourdomain.com;
+    location / {
+        proxy_pass http://127.0.0.1:8080;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+}
+```
+
+---
+
+## Buoc 6: Thao tac hang ngay
+
+### Cap nhat code moi
+```bash
+cd /opt/ecommerce
+# Upload file moi len server, sau do:
+docker compose up -d --build web  # Chi build lai web, giu nguyen SQL
+```
+
+### Xem logs
+```bash
+docker compose logs -f --tail=100 web
+```
+
+### Restart
+```bash
 docker compose restart web
+docker compose restart sqlserver
+```
 
-# Dừng tất cả
+### Dung tat ca
+```bash
 docker compose down
-
-# Dừng + xóa volume (mất data!)
+# Down + xoa data (CAN THAN):
 docker compose down -v
+```
 
-# Xem disk usage
-docker system df
+### Backup database
+```bash
+docker exec ecommerce-sqlserver /opt/mssql-tools18/bin/sqlcmd \
+  -S localhost -U sa -P "YourStrong@Passw0rd" -C \
+  -Q "BACKUP DATABASE Hshop2023 TO DISK = '/var/opt/mssql/backups/hshop2023.bak'"
 
-# Dọn image cũ
-docker system prune -f
+# Copy ra khoi container:
+docker cp ecommerce-sqlserver:/var/opt/mssql/backups/hshop2023.bak ./backup.bak
+```
+
+### Restore database
+```bash
+docker cp ./backup.bak ecommerce-sqlserver:/var/opt/mssql/backups/hshop2023.bak
+docker exec ecommerce-sqlserver /opt/mssql-tools18/bin/sqlcmd \
+  -S localhost -U sa -P "YourStrong@Passw0rd" -C \
+  -Q "RESTORE DATABASE Hshop2023 FROM DISK = '/var/opt/mssql/backups/hshop2023.bak' WITH REPLACE"
 ```
 
 ---
 
-## Backup / Restore Database
+## Xu ly su co
 
-### Backup
-
+### SQL Server khoi dong cham
 ```bash
-# Backup database ra file .bak
-docker exec hshop-sqlserver /opt/mssql-tools18/bin/sqlcmd \
-  -S localhost -U sa -P 'YourStrong@Passw0rd' -C \
-  -Q "BACKUP DATABASE Hshop2023 TO DISK = '/var/opt/mssql/Hshop2023.bak'"
-
-# Copy ra host
-docker cp hshop-sqlserver:/var/opt/mssql/Hshop2023.bak ./backup.bak
+docker compose logs sqlserver | grep -i "error\|fail"
+# Tang thoi gian cho trong docker-compose.yml: start_period: 60s
 ```
 
-### Restore
-
+### Web app khong ket noi duoc SQL
 ```bash
-# Copy file .bak vào container
-docker cp ./backup.bak hshop-sqlserver:/var/opt/mssql/
+# Kiem tra network:
+docker exec ecommerce-web ping -c 3 sqlserver
 
-# Restore
-docker exec hshop-sqlserver /opt/mssql-tools18/bin/sqlcmd \
-  -S localhost -U sa -P 'YourStrong@Passw0rd' -C \
-  -Q "RESTORE DATABASE Hshop2023 FROM DISK = '/var/opt/mssql/backup.bak' WITH REPLACE"
+# Kiem tra connection string:
+docker exec ecommerce-web printenv DB_CONNECTION_STRING
 ```
 
----
-
-## Troubleshooting
-
-### SQL Server không start được
-
+### Port 8080 da bi chiem
 ```bash
-docker compose logs sqlserver
-# Kiểm tra SA_PASSWORD đủ mạnh (ít nhất 8 ký tự, có upper, lower, digit, symbol)
+netstat -tlpun | grep 8080
+# Neu bi chiem, doi port trong docker-compose.yml: "8081:8080" -> "8090:8080"
 ```
 
-### Web app không kết nối được database
-
+### Loi UTF-16 voi SQL scripts
+Neu gap loi encoding, convert UTF-16 sang UTF-8:
 ```bash
-# Kiểm tra connection string trong .env
-# Server phải là "sqlserver" (tên service), KHÔNG phải "localhost"
-grep DB_CONNECTION_STRING .env
-```
-
-### Port 8080 bị chiếm
-
-```bash
-# Kiểm tra port nào đang dùng
-ss -tlnp | grep 8080
-
-# Nếu bị chiếm, đổi port trong docker-compose.yml
-# Ví dụ: "9090:8080"
-```
-
-### Container bị OOM (out of memory)
-
-```bash
-# SQL Server cần ít nhất 2GB RAM
-# Kiểm tra memory usage
-docker stats
-
-# Nếu server yếu, giảm memory limit trong docker-compose.yml
-```
-
-### Xem database từ bên ngoài
-
-```bash
-# Kết nối từ local qua port 1434
-# SQL Server Management Studio (SSMS) hoặc Azure Data Studio:
-# Server: 157.66.46.69,1434
-# User: sa
-# Password: (SA_PASSWORD của bạn)
-```
-
----
-
-## Cấu trúc file quan trọng
-
-```
-ECommerceMVC/
-├── docker-compose.yml          # Docker Compose config
-├── Dockerfile                  # .NET 8 build + runtime
-├── .env                        # Environment variables (KHÔNG commit!)
-├── .env.example                # Template mẫu
-├── .env.production.template    # Template cho production
-├── .dockerignore               # Files bỏ qua khi build
-├── deploy.sh                   # Script deploy tự động
-└── DEPLOY.md                   # File hướng dẫn này
+iconv -f UTF-16LE -t UTF-8 HShopScript.sql > HShopScript_utf8.sql
 ```
