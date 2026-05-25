@@ -13,8 +13,8 @@ for p in /opt/mssql-tools18/bin/sqlcmd /opt/mssql-tools/bin/sqlcmd; do
     if [ -x "$p" ]; then SQLCMD="$p"; break; fi
 done
 
-# Common sqlcmd flags: -C = trust cert, -f 65001 = UTF-8 encoding
-SQLCMD_FLAGS="-S localhost -U sa -P \"$SA_PASSWORD\" -C -f 65001"
+# Flags: -C trust cert, -f 65001 = UTF-8 input
+SCMD="$SQLCMD -S localhost -U sa -P $SA_PASSWORD -C -f 65001"
 
 echo "=== Custom SQL Server Entrypoint ==="
 echo "Starting sqlservr in background..."
@@ -26,7 +26,7 @@ SQLSERVR_PID=$!
 # Wait for SQL Server to be ready
 echo "Waiting for SQL Server to accept connections..."
 for i in $(seq 1 90); do
-    if [ -n "$SQLCMD" ] && $SQLCMD -Q "SELECT 1" &>/dev/null; then
+    if [ -n "$SQLCMD" ] && $SQLCMD -S localhost -U sa -P "$SA_PASSWORD" -C -Q "SELECT 1" &>/dev/null; then
         echo "SQL Server is ready (took ${i}s)"
         break
     fi
@@ -34,26 +34,32 @@ for i in $(seq 1 90); do
 done
 
 # Run init scripts if they exist
-if ls /init-scripts/*.sql 1>/dev/null 2>&1; then
+if ls /init-scripts/[0-9]*.sql 1>/dev/null 2>&1; then
     echo "=== Running initialization scripts ==="
 
-    # HShopScript.sql creates the database, run it first against master
-    if [ -f /init-scripts/01-HShopScript.sql ]; then
-        echo ">>> Running HShopScript.sql (creates Hshop2023 database + schema)..."
-        eval "$SQLCMD -i /init-scripts/01-HShopScript.sql" 2>&1 | tail -3 || echo "  WARNING: HShopScript.sql had errors"
-    fi
+    # Run ALL numbered scripts in order against the correct database
+    for f in $(ls /init-scripts/[0-9]*.sql | sort); do
+        FNAME=$(basename "$f")
+        echo ">>> Running $FNAME..."
 
-    # Remaining scripts run against Hshop2023
-    for f in /init-scripts/02-*.sql /init-scripts/03-*.sql /init-scripts/04-*.sql /init-scripts/05-*.sql /init-scripts/06-*.sql /init-scripts/07-*.sql /init-scripts/08-*.sql /init-scripts/09-*.sql /init-scripts/10-*.sql; do
-        [ -f "$f" ] || continue
-        echo ">>> Running $(basename "$f") against Hshop2023..."
-        eval "$SQLCMD -d Hshop2023 -i \"$f\"" 2>&1 | tail -3 || echo "  WARNING: $(basename "$f") had errors"
+        # HShopScript.sql must run against master (it creates the DB)
+        if echo "$FNAME" | grep -qi "HShopScript\|01-"; then
+            echo "    (running against master - creates Hshop2023 database)"
+            $SQLCMD -S localhost -U sa -P "$SA_PASSWORD" -C -i "$f" 2>&1 | tail -5 || echo "  WARNING: $FNAME had errors"
+        else
+            # All other scripts run against Hshop2023
+            $SQLCMD -S localhost -U sa -P "$SA_PASSWORD" -C -d Hshop2023 -i "$f" 2>&1 | tail -5 || echo "  WARNING: $FNAME had errors"
+        fi
     done
 
     echo "=== Initialization complete ==="
 else
     echo "No init scripts found in /init-scripts/"
 fi
+
+# Verify database was created
+echo "=== Verifying Hshop2023 database ==="
+$SQLCMD -S localhost -U sa -P "$SA_PASSWORD" -C -Q "SELECT name FROM sys.databases WHERE name = 'Hshop2023'"
 
 # Wait for sqlservr to keep the container alive
 echo "Keeping sqlservr running (PID $SQLSERVR_PID)..."
