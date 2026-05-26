@@ -14,5 +14,6 @@ public class HangHoaFilterVM
     public List<string> Materials { get; set; } = new();
     public List<string> Styles { get; set; } = new();
     public List<string> Colors { get; set; } = new();
+    public bool OnlyFavourite { get; set; }
     public string Mode { get; set; } = "shop";
 }

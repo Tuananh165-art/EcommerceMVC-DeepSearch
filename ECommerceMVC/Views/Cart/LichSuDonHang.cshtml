@@ -29,30 +29,8 @@
                     <div class="d-flex flex-column gap-3">
                         @foreach (var item in Model)
                         {
-                            <!-- Determine dynamic status color -->
-                            var badgeClass = "bg-secondary-light text-secondary";
-                            var iconName = "clock";
-                            
-                            if (item.TrangThai?.Contains("thành") == true || item.TrangThai?.Contains("thành công") == true || item.TrangThai?.Contains("Giao") == true)
-                            {
-                                badgeClass = "bg-success-light text-success";
-                                iconName = "check-circle";
-                            }
-                            else if (item.TrangThai?.Contains("toán") == true || item.TrangThai?.Contains("duyệt") == true)
-                            {
-                                badgeClass = "bg-info-light text-info";
-                                iconName = "credit-card";
-                            }
-                            else if (item.TrangThai?.Contains("hủy") == true)
-                            {
-                                badgeClass = "bg-danger-light text-danger";
-                                iconName = "x";
-                            }
-                            else
-                            {
-                                badgeClass = "bg-warning-light text-warning";
-                                iconName = "clock";
-                            }
+                            var badgeClass = ECommerceMVC.Helpers.OrderStatusHelper.GetUserHistoryBadgeCss(item.StatusId);
+                            var iconName = ECommerceMVC.Helpers.OrderStatusHelper.GetUserHistoryIcon(item.StatusId);
 
                             <div class="glass-card p-4 transition-base hover-shadow-md" style="border-radius: var(--radius-lg);">
                                 <div class="row align-items-center g-3">

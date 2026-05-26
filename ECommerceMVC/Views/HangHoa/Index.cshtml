@@ -7,6 +7,7 @@
         || Model.Filter.Materials.Any()
         || Model.Filter.Styles.Any()
         || Model.Filter.Colors.Any()
+        || Model.Filter.OnlyFavourite
         || Model.Filter.MinRating.HasValue
         || Model.Filter.MinPrice.HasValue
         || Model.Filter.MaxPrice.HasValue;
@@ -43,6 +44,11 @@
                 <div class="shop-filter-block">
                     <label class="shop-filter-label" for="queryDesktop">Tìm trong collection</label>
                     <input id="queryDesktop" type="search" name="query" value="@Model.Filter.Query" class="form-control shop-input" placeholder="Sofa, bàn, đèn..." />
+                </div>
+                <div class="shop-filter-block">
+                    <div class="shop-check-list">
+                        <label><input type="checkbox" name="onlyFavourite" value="true" checked="@(Model.Filter.OnlyFavourite ? "checked" : null)" /> Chỉ hiện sản phẩm đã yêu thích</label>
+                    </div>
                 </div>
 
                 <div class="shop-filter-block">
@@ -156,6 +162,7 @@
                 @foreach (var material in Model.Filter.Materials) { <input type="hidden" name="materials" value="@material" /> }
                 @foreach (var color in Model.Filter.Colors) { <input type="hidden" name="colors" value="@color" /> }
                 @foreach (var style in Model.Filter.Styles) { <input type="hidden" name="styles" value="@style" /> }
+                @if (Model.Filter.OnlyFavourite) { <input type="hidden" name="onlyFavourite" value="true" /> }
                 @if (!string.IsNullOrWhiteSpace(Model.Filter.Query)) { <input type="hidden" name="query" value="@Model.Filter.Query" /> }
                 @if (Model.Filter.MinRating.HasValue) { <input type="hidden" name="minRating" value="@Model.Filter.MinRating.Value" /> }
 
@@ -242,6 +249,9 @@
 
             <label class="shop-filter-label" for="queryMobile">Tìm kiếm</label>
             <input id="queryMobile" type="search" name="query" value="@Model.Filter.Query" class="form-control shop-input mb-3" />
+            <div class="shop-check-list mb-3">
+                <label><input type="checkbox" name="onlyFavourite" value="true" checked="@(Model.Filter.OnlyFavourite ? "checked" : null)" /> Chỉ hiện sản phẩm đã yêu thích</label>
+            </div>
 
             <div class="shop-range-root mb-3" data-range-root data-min-default="0" data-max-default="150000000">
                 <div class="shop-range-track">

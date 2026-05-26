@@ -6,6 +6,7 @@ namespace ECommerceMVC.ViewModels
     {
         public int MaHd { get; set; }
         public DateTime NgayDat { get; set; }
+        public int StatusId { get; set; }
         public string TrangThai { get; set; } = string.Empty;
         public string CachThanhToan { get; set; } = string.Empty;
         public int TongSoLuong { get; set; }
@@ -21,7 +22,7 @@ namespace ECommerceMVC.ViewModels
         public int SoLuong { get; set; }
         public double DonGia { get; set; }
         public double GiamGia { get; set; }
-        public double ThanhTien => SoLuong * (DonGia - GiamGia);
+        public double ThanhTien => SoLuong * DonGia * (1 - GiamGia);
     }
 
     public class ChiTietDonHangVM

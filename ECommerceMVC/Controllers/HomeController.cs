@@ -26,7 +26,8 @@ namespace ECommerceMVC.Controllers
 				{
 					MaHh = g.Key,
 					SoDanhGia = g.Count(),
-					DiemDanhGia = (int)Math.Round(g.Average(x => x.SoSao), MidpointRounding.AwayFromZero)
+					DiemDanhGia = (int)Math.Round(g.Average(x => x.SoSao), MidpointRounding.AwayFromZero),
+					DiemDanhGiaTrungBinh = g.Average(x => (double)x.SoSao)
 				});
 
 				var products = _db.HangHoas
@@ -47,7 +48,8 @@ namespace ECommerceMVC.Controllers
 					MoTaNgan = x.p.MoTaDonVi ?? string.Empty,
 					TenLoai = x.p.MaLoaiNavigation.TenLoai,
 					SoDanhGia = x.rating != null ? x.rating.SoDanhGia : 0,
-					DiemDanhGia = x.rating != null ? x.rating.DiemDanhGia : 0
+					DiemDanhGia = x.rating != null ? x.rating.DiemDanhGia : 0,
+					DiemDanhGiaTrungBinh = x.rating != null ? x.rating.DiemDanhGiaTrungBinh : 0
 				})
 				.ToList();
 

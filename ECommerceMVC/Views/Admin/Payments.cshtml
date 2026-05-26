@@ -53,7 +53,9 @@
             <tbody>
             @foreach (var p in Model.Rows)
             {
-                var gatewayClass = p.HasPaymentIssue ? "status-chip status-failed" : "status-chip status-success";
+                var gatewayClass = p.HasPaymentIssue
+                    ? "status-chip status-failed"
+                    : (p.PaymentStatus.Contains("Chờ", StringComparison.OrdinalIgnoreCase) ? "status-chip status-info" : "status-chip status-success");
                 <tr>
                     <td>#@p.MaHd<div class="small text-muted">@p.NgayDat.ToString("dd/MM/yyyy HH:mm")</div></td>
                     <td>@p.CustomerName</td>

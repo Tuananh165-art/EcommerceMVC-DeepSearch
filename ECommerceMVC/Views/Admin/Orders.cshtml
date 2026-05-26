@@ -43,21 +43,7 @@
             <tbody>
             @foreach (var o in Model)
             {
-                var statusClass = "status-chip status-pending";
-                var statusText = (o.StatusName ?? string.Empty).Trim();
-                var lower = statusText.ToLowerInvariant();
-                if (lower.Contains("complete") || lower.Contains("hoàn tất") || lower.Contains("đã giao"))
-                {
-                    statusClass = "status-chip status-success";
-                }
-                else if (lower.Contains("hủy") || lower.Contains("cancel") || lower.Contains("lỗi"))
-                {
-                    statusClass = "status-chip status-failed";
-                }
-                else if (lower.Contains("đang giao") || lower.Contains("shipping"))
-                {
-                    statusClass = "status-chip status-info";
-                }
+                var statusClass = ECommerceMVC.Helpers.OrderStatusHelper.GetAdminStatusCss(o.StatusId);
                 <tr>
                     <td>#@o.MaHd</td>
                     <td>@o.CustomerName<div class="small text-muted">@o.CustomerId</div></td>

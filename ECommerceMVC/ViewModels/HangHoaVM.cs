@@ -14,6 +14,7 @@ namespace ECommerceMVC.ViewModels
 		public string TenLoai { get; set; } = string.Empty;
 		public bool IsFavourite { get; set; }
 		public int DiemDanhGia { get; set; }
+		public double DiemDanhGiaTrungBinh { get; set; }
 		public int SoDanhGia { get; set; }
 	}
 

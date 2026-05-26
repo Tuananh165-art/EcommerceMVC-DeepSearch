@@ -403,7 +403,22 @@ namespace ECommerceMVC.Controllers
 			string paymentMethodLabel,
 			string paymentStatus)
 		{
-			var trangThaiMoi = db.TrangThais.OrderBy(x => x.MaTrangThai).FirstOrDefault();
+			var trangThaiMoi = db.TrangThais
+				.AsNoTracking()
+				.FirstOrDefault(x => x.MaTrangThai == OrderStatusHelper.New)
+				?? db.TrangThais
+					.AsNoTracking()
+					.Where(x => x.TenTrangThai.Contains("mới")
+						|| x.TenTrangThai.Contains("new")
+						|| x.TenTrangThai.Contains("pending")
+						|| x.TenTrangThai.Contains("chờ"))
+					.OrderBy(x => x.MaTrangThai)
+					.FirstOrDefault()
+				?? db.TrangThais
+					.AsNoTracking()
+					.Where(x => x.MaTrangThai >= 0)
+					.OrderBy(x => x.MaTrangThai)
+					.FirstOrDefault();
 			if (trangThaiMoi == null)
 			{
 				ModelState.AddModelError(string.Empty, "Chưa cấu hình trạng thái đơn hàng trong hệ thống.");
@@ -499,7 +514,7 @@ namespace ECommerceMVC.Controllers
 				return RedirectToAction(nameof(LichSuDonHang));
 			}
 
-			var subtotal = order.ChiTietHds.Sum(c => c.SoLuong * (c.DonGia - c.GiamGia));
+			var subtotal = order.ChiTietHds.Sum(c => c.SoLuong * c.DonGia * (1 - c.GiamGia));
 			var model = new CheckoutSuccessVM
 			{
 				OrderId = order.MaHd,
@@ -529,10 +544,11 @@ namespace ECommerceMVC.Controllers
 				{
 					MaHd = x.MaHd,
 					NgayDat = x.NgayDat,
+					StatusId = x.MaTrangThai,
 					TrangThai = x.MaTrangThaiNavigation.TenTrangThai,
 					CachThanhToan = x.CachThanhToan,
 					TongSoLuong = x.ChiTietHds.Sum(c => c.SoLuong),
-					TongTien = x.ChiTietHds.Sum(c => c.SoLuong * (c.DonGia - c.GiamGia)) + x.PhiVanChuyen
+					TongTien = x.ChiTietHds.Sum(c => c.SoLuong * c.DonGia * (1 - c.GiamGia)) + x.PhiVanChuyen
 				})
 				.ToList();
 

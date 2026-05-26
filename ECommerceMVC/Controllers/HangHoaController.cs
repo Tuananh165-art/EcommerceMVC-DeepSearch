@@ -32,6 +32,7 @@ namespace ECommerceMVC.Controllers
 			double? maxPrice = null,
 			string? query = null,
 			int? minRating = null,
+			bool onlyFavourite = false,
 			string? mode = null)
 		{
 			var filter = new HangHoaFilterVM
@@ -48,6 +49,7 @@ namespace ECommerceMVC.Controllers
 				MaxPrice = maxPrice,
 				Query = string.IsNullOrWhiteSpace(query) ? null : query.Trim(),
 				MinRating = minRating.HasValue ? Math.Clamp(minRating.Value, 1, 5) : null,
+				OnlyFavourite = onlyFavourite,
 				Mode = string.Equals(mode, "list", StringComparison.OrdinalIgnoreCase) ? "list" : "shop"
 			};
 
@@ -112,6 +114,21 @@ namespace ECommerceMVC.Controllers
 				baseQuery = baseQuery.Where(p => (p.DonGia ?? 0) <= filter.MaxPrice.Value);
 			}
 
+			if (filter.OnlyFavourite)
+			{
+				if (string.IsNullOrWhiteSpace(customerId))
+				{
+					baseQuery = baseQuery.Where(p => false);
+				}
+				else
+				{
+					var favouriteIds = db.YeuThiches
+						.Where(x => x.MaKh == customerId && x.MaHh.HasValue)
+						.Select(x => x.MaHh!.Value);
+					baseQuery = baseQuery.Where(p => favouriteIds.Contains(p.MaHh));
+				}
+			}
+
 			baseQuery = catalogQueryService.ApplyRatingFilter(baseQuery, filter.MinRating);
 			baseQuery = catalogQueryService.ApplySort(baseQuery, filter.Sort);
 
@@ -136,17 +153,41 @@ namespace ECommerceMVC.Controllers
 				})
 				.ToList();
 
-			if (!string.IsNullOrWhiteSpace(customerId) && items.Count > 0)
+			if (items.Count > 0)
 			{
 				var itemIds = items.Select(x => x.MaHh).ToList();
-				var favouriteIds = db.YeuThiches
+
+				var ratingLookup = db.ProductReviews
 					.AsNoTracking()
-					.Where(x => x.MaKh == customerId && x.MaHh.HasValue && itemIds.Contains(x.MaHh.Value))
-					.Select(x => x.MaHh!.Value)
-					.ToHashSet();
+					.Where(x => itemIds.Contains(x.MaHh))
+					.GroupBy(x => x.MaHh)
+					.Select(g => new
+					{
+						MaHh = g.Key,
+						SoDanhGia = g.Count(),
+						DiemDanhGiaTrungBinh = g.Average(x => (double)x.SoSao)
+					})
+					.ToDictionary(x => x.MaHh, x => x);
+
+				HashSet<int> favouriteIds = new();
+				if (!string.IsNullOrWhiteSpace(customerId))
+				{
+					favouriteIds = db.YeuThiches
+						.AsNoTracking()
+						.Where(x => x.MaKh == customerId && x.MaHh.HasValue && itemIds.Contains(x.MaHh.Value))
+						.Select(x => x.MaHh!.Value)
+						.ToHashSet();
+				}
 
 				foreach (var item in items)
 				{
+					if (ratingLookup.TryGetValue(item.MaHh, out var rating))
+					{
+						item.SoDanhGia = rating.SoDanhGia;
+						item.DiemDanhGiaTrungBinh = rating.DiemDanhGiaTrungBinh;
+						item.DiemDanhGia = (int)Math.Round(rating.DiemDanhGiaTrungBinh, MidpointRounding.AwayFromZero);
+					}
+
 					item.IsFavourite = favouriteIds.Contains(item.MaHh);
 				}
 			}

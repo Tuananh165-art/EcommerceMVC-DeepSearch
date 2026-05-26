@@ -45,7 +45,8 @@
     var category = string.IsNullOrWhiteSpace(item.TenLoai) ? "Nội thất cao cấp" : item.TenLoai;
     var summary = BuildCollectionSummary(item.MoTaNgan, category, item.DonGia);
     var hasRating = item.SoDanhGia > 0;
-    var rating = Math.Clamp(item.DiemDanhGia, 0, 5);
+    var averageRating = Math.Clamp(item.DiemDanhGiaTrungBinh, 0, 5);
+    var rating = (int)Math.Floor(averageRating);
     var quickMeta = index switch
     {
         0 => new[] { "Walnut / brass accents", "Giao nhanh 2-4 ngày" },
@@ -127,7 +128,7 @@
                         {
                             <i data-icon="@(star <= rating ? "star-filled" : "star")" data-size="14px"></i>
                         }
-                        <span>@(hasRating ? $"{rating}/5 · {item.SoDanhGia} đánh giá" : "Chưa có đánh giá")</span>
+                        <span>@(hasRating ? $"{averageRating:0.0} ({item.SoDanhGia} đánh giá)" : "Chưa có đánh giá")</span>
                     </div>
 
                     <div class="catalog-luxe-footer-actions d-flex gap-2">

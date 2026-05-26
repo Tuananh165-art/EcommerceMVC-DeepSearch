@@ -39,8 +39,12 @@ public class AdminController : Controller
         var today = DateTime.Today;
         var start30 = today.AddDays(-29);
         var start12Months = new DateTime(today.Year, today.Month, 1).AddMonths(-11);
+        var pendingStatusIds = OrderStatusHelper.PendingStatusIds;
+        var shippingStatusIds = OrderStatusHelper.ShippingStatusIds;
+        var completedStatusIds = OrderStatusHelper.CompletedStatusIds;
+        var cancelledStatusIds = OrderStatusHelper.CancelledStatusIds;
         var completedOrderTotals = await db.HoaDons
-            .Where(h => h.MaTrangThai == 1 || h.MaTrangThai == 3)
+            .Where(h => completedStatusIds.Contains(h.MaTrangThai))
             .Join(
                 db.ChiTietHds,
                 h => h.MaHd,
@@ -68,10 +72,10 @@ public class AdminController : Controller
             OrderCount = await db.HoaDons.CountAsync(),
             CustomerCount = await db.KhachHangs.CountAsync(),
             ProductCount = await db.HangHoas.CountAsync(),
-            PendingOrderCount = await db.HoaDons.CountAsync(x => x.MaTrangThai == 0),
-            ShippingOrderCount = await db.HoaDons.CountAsync(x => x.MaTrangThai == 2),
-            CompletedOrderCount = await db.HoaDons.CountAsync(x => x.MaTrangThai == 1 || x.MaTrangThai == 3),
-            CancelledOrderCount = await db.HoaDons.CountAsync(x => x.MaTrangThai < 0),
+            PendingOrderCount = await db.HoaDons.CountAsync(x => pendingStatusIds.Contains(x.MaTrangThai)),
+            ShippingOrderCount = await db.HoaDons.CountAsync(x => shippingStatusIds.Contains(x.MaTrangThai)),
+            CompletedOrderCount = await db.HoaDons.CountAsync(x => completedStatusIds.Contains(x.MaTrangThai)),
+            CancelledOrderCount = await db.HoaDons.CountAsync(x => x.MaTrangThai < 0 || cancelledStatusIds.Contains(x.MaTrangThai)),
             RefundedOrderCount = await db.HoaDons.CountAsync(x => (x.GhiChu ?? "").Contains("refund") || (x.GhiChu ?? "").Contains("hoàn tiền")),
         };
 
@@ -79,6 +83,7 @@ public class AdminController : Controller
         model.LowStockCount = allProducts.Count(x => x.IsLowStock);
 
         model.TopProducts = await db.ChiTietHds
+            .Where(x => OrderStatusHelper.CompletedStatusIds.Contains(x.MaHdNavigation.MaTrangThai))
             .GroupBy(x => new { x.MaHh, x.MaHhNavigation.TenHh, x.MaHhNavigation.Hinh })
             .Select(g => new AdminTopProductVM
             {
@@ -93,7 +98,7 @@ public class AdminController : Controller
             .ToListAsync();
 
         model.NewOrders = await BuildOrderRows(db.HoaDons.Include(x => x.MaKhNavigation).Include(x => x.MaTrangThaiNavigation).Include(x => x.ChiTietHds).OrderByDescending(x => x.NgayDat).Take(8));
-        model.FailedPaymentCount = model.NewOrders.Count(x => HasPaymentIssue(x.PaymentMethod, x.StatusName, x.Note));
+        model.FailedPaymentCount = model.NewOrders.Count(x => HasPaymentIssue(x.PaymentMethod, x.StatusName, x.StatusId, x.Note));
 
         var dailyRaw = completedOrderTotals
             .Where(h => h.NgayDat.Date >= start30)
@@ -298,10 +303,17 @@ public class AdminController : Controller
         return RedirectToAction(nameof(Categories));
     }
 
-    public async Task<IActionResult> Orders(int? status, string? q, string? payment)
+    public async Task<IActionResult> Orders(int? status, string? q, string? payment, string? preset = null)
     {
         var query = db.HoaDons.Include(x => x.MaKhNavigation).Include(x => x.MaTrangThaiNavigation).Include(x => x.ChiTietHds).AsQueryable();
-        if (status.HasValue) query = query.Where(x => x.MaTrangThai == status.Value);
+        if (string.Equals(preset, "pending", StringComparison.OrdinalIgnoreCase))
+        {
+            query = query.Where(x => OrderStatusHelper.PendingStatusIds.Contains(x.MaTrangThai));
+        }
+        else if (status.HasValue)
+        {
+            query = query.Where(x => x.MaTrangThai == status.Value);
+        }
         if (!string.IsNullOrWhiteSpace(payment)) query = query.Where(x => x.CachThanhToan.Contains(payment));
         if (!string.IsNullOrWhiteSpace(q))
         {
@@ -338,7 +350,7 @@ public class AdminController : Controller
     public async Task<IActionResult> OrderQuickStatus(int id, string actionName)
     {
         var order = await db.HoaDons.FindAsync(id); if (order == null) return RedirectToAction(nameof(Orders));
-        int? status = actionName switch { "confirm" => await FindStatusId("xác nhận") ?? await FindStatusId("chờ") ?? 1, "shipping" => await FindStatusId("giao") ?? 2, "complete" => await FindStatusId("hoàn tất") ?? 3, "cancel" => await FindStatusId("hủy") ?? 4, "refund" => await FindStatusId("hoàn tiền") ?? await FindStatusId("hủy") ?? 4, _ => null };
+        int? status = actionName switch { "confirm" => await FindStatusId("xác nhận") ?? await FindStatusId("chờ") ?? OrderStatusHelper.PendingConfirmation, "shipping" => await FindStatusId("giao") ?? OrderStatusHelper.Shipping, "complete" => await FindStatusId("hoàn tất") ?? OrderStatusHelper.Completed, "cancel" => await FindStatusId("hủy") ?? OrderStatusHelper.Cancelled, "refund" => await FindStatusId("hoàn tiền") ?? await FindStatusId("hủy") ?? OrderStatusHelper.Cancelled, _ => null };
         if (status.HasValue) { order.MaTrangThai = status.Value; if (actionName == "complete") order.NgayGiao = DateTime.Now; if (actionName == "refund") order.GhiChu = CompactNote(order.GhiChu, "refund"); await db.SaveChangesAsync(); TempData["AdminSuccess"] = "Đã cập nhật nhanh trạng thái."; }
         return RedirectToAction(nameof(Orders));
     }
@@ -352,7 +364,20 @@ public class AdminController : Controller
         var query = db.KhachHangs.Include(x => x.HoaDons).ThenInclude(x => x.ChiTietHds).AsQueryable();
         if (!string.IsNullOrWhiteSpace(q)) { q = q.Trim(); query = query.Where(x => x.MaKh.Contains(q) || x.HoTen.Contains(q) || x.Email.Contains(q)); }
         if (state == "active") query = query.Where(x => x.HieuLuc); if (state == "locked") query = query.Where(x => !x.HieuLuc);
-        var rows = await query.Select(k => new AdminCustomerRowVM { MaKh = k.MaKh, HoTen = k.HoTen, Email = k.Email, DienThoai = k.DienThoai, HieuLuc = k.HieuLuc, VaiTro = k.VaiTro, OrderCount = k.HoaDons.Count, TotalSpent = k.HoaDons.SelectMany(h => h.ChiTietHds).Sum(ct => (double?)(ct.SoLuong * ct.DonGia * (1 - ct.GiamGia))) ?? 0 }).OrderByDescending(x => x.TotalSpent).ToListAsync();
+        var rows = await query.Select(k => new AdminCustomerRowVM
+        {
+            MaKh = k.MaKh,
+            HoTen = k.HoTen,
+            Email = k.Email,
+            DienThoai = k.DienThoai,
+            HieuLuc = k.HieuLuc,
+            VaiTro = k.VaiTro,
+            OrderCount = k.HoaDons.Count,
+            TotalSpent = k.HoaDons
+                .Where(h => OrderStatusHelper.CompletedStatusIds.Contains(h.MaTrangThai))
+                .SelectMany(h => h.ChiTietHds)
+                .Sum(ct => (double?)(ct.SoLuong * ct.DonGia * (1 - ct.GiamGia))) ?? 0
+        }).OrderByDescending(x => x.TotalSpent).ToListAsync();
         foreach (var row in rows) row.GroupName = GetCustomerGroup(row.TotalSpent, row.OrderCount, row.VaiTro);
         if (!string.IsNullOrWhiteSpace(group)) rows = rows.Where(x => x.GroupName.Equals(group, StringComparison.OrdinalIgnoreCase)).ToList();
         ViewBag.Query = q; ViewBag.State = state; ViewBag.Group = group;
@@ -385,7 +410,20 @@ public class AdminController : Controller
     {
         var query = db.HoaDons.Include(x => x.MaKhNavigation).Include(x => x.MaTrangThaiNavigation).Include(x => x.ChiTietHds).AsQueryable();
         if (!string.IsNullOrWhiteSpace(method)) query = query.Where(x => x.CachThanhToan.Contains(method));
-        var rows = (await BuildOrderRows(query.OrderByDescending(x => x.NgayDat))).Select(x => new AdminPaymentRowVM { MaHd = x.MaHd, CustomerName = x.CustomerName, CustomerId = x.CustomerId, NgayDat = x.NgayDat, StatusName = x.StatusName, StatusId = x.StatusId, PaymentMethod = x.PaymentMethod, Total = x.Total, Note = x.Note, PaymentStatus = GetPaymentStatus(x.PaymentMethod, x.StatusName, x.Note), HasPaymentIssue = HasPaymentIssue(x.PaymentMethod, x.StatusName, x.Note) }).ToList();
+        var rows = (await BuildOrderRows(query.OrderByDescending(x => x.NgayDat))).Select(x => new AdminPaymentRowVM
+        {
+            MaHd = x.MaHd,
+            CustomerName = x.CustomerName,
+            CustomerId = x.CustomerId,
+            NgayDat = x.NgayDat,
+            StatusName = x.StatusName,
+            StatusId = x.StatusId,
+            PaymentMethod = x.PaymentMethod,
+            Total = x.Total,
+            Note = x.Note,
+            PaymentStatus = GetPaymentStatus(x.PaymentMethod, x.StatusName, x.StatusId, x.Note),
+            HasPaymentIssue = HasPaymentIssue(x.PaymentMethod, x.StatusName, x.StatusId, x.Note)
+        }).ToList();
         if (state == "error") rows = rows.Where(x => x.HasPaymentIssue).ToList(); if (state == "paid") rows = rows.Where(x => x.PaymentStatus.Contains("Đã thanh toán")).ToList(); if (state == "pending") rows = rows.Where(x => x.PaymentStatus.Contains("Chờ")).ToList(); if (state == "refund") rows = rows.Where(x => x.PaymentStatus.Contains("hoàn tiền", StringComparison.OrdinalIgnoreCase)).ToList();
         ViewBag.Method = method; ViewBag.State = state;
         return View(new AdminPaymentSummaryVM { Rows = rows, TotalTransactions = rows.Count, PaidCount = rows.Count(x => x.PaymentStatus.Contains("Đã thanh toán")), PendingCount = rows.Count(x => x.PaymentStatus.Contains("Chờ")), FailedCount = rows.Count(x => x.HasPaymentIssue), RefundedCount = rows.Count(x => x.PaymentStatus.Contains("hoàn tiền", StringComparison.OrdinalIgnoreCase)), OnlineRevenue = rows.Where(x => x.PaymentStatus.Contains("Đã thanh toán") && !x.PaymentMethod.Contains("COD", StringComparison.OrdinalIgnoreCase)).Sum(x => x.Total) });
@@ -402,7 +440,43 @@ public class AdminController : Controller
     private async Task<List<AdminProductRowVM>> BuildProductRows(IQueryable<HangHoa> query)
     {
         var products = await query.ToListAsync();
-        return products.Select(p => { var meta = AdminMetadataHelper.ParseProduct(p.MoTa); return new AdminProductRowVM { MaHh = p.MaHh, TenHh = p.TenHh, TenAlias = p.TenAlias, Hinh = p.Hinh, CategoryName = p.MaLoaiNavigation?.TenLoai ?? "", SupplierName = p.MaNccNavigation?.TenCongTy ?? p.MaNcc, Price = p.DonGia ?? 0, Stock = p.SoLuongTon, ShortDescription = p.MoTaDonVi, MauSac = p.MauSac, KichThuoc = p.KichThuoc, ChatLieu = p.ChatLieu, BaoHanh = p.BaoHanh, PhongCach = p.PhongCach, IsVisible = meta.IsVisible, LowStockThreshold = meta.LowStockThreshold, Sold = p.ChiTietHds.Sum(ct => ct.SoLuong), Revenue = p.ChiTietHds.Sum(ct => ct.SoLuong * ct.DonGia * (1 - ct.GiamGia)) }; }).ToList();
+        var soldRevenueLookup = await db.ChiTietHds
+            .Where(ct => OrderStatusHelper.CompletedStatusIds.Contains(ct.MaHdNavigation.MaTrangThai))
+            .GroupBy(ct => ct.MaHh)
+            .Select(g => new
+            {
+                MaHh = g.Key,
+                Sold = g.Sum(x => x.SoLuong),
+                Revenue = g.Sum(x => x.SoLuong * x.DonGia * (1 - x.GiamGia))
+            })
+            .ToDictionaryAsync(x => x.MaHh, x => new { x.Sold, x.Revenue });
+
+        return products.Select(p =>
+        {
+            var meta = AdminMetadataHelper.ParseProduct(p.MoTa);
+            soldRevenueLookup.TryGetValue(p.MaHh, out var soldData);
+            return new AdminProductRowVM
+            {
+                MaHh = p.MaHh,
+                TenHh = p.TenHh,
+                TenAlias = p.TenAlias,
+                Hinh = p.Hinh,
+                CategoryName = p.MaLoaiNavigation?.TenLoai ?? "",
+                SupplierName = p.MaNccNavigation?.TenCongTy ?? p.MaNcc,
+                Price = p.DonGia ?? 0,
+                Stock = p.SoLuongTon,
+                ShortDescription = p.MoTaDonVi,
+                MauSac = p.MauSac,
+                KichThuoc = p.KichThuoc,
+                ChatLieu = p.ChatLieu,
+                BaoHanh = p.BaoHanh,
+                PhongCach = p.PhongCach,
+                IsVisible = meta.IsVisible,
+                LowStockThreshold = meta.LowStockThreshold,
+                Sold = soldData?.Sold ?? 0,
+                Revenue = soldData?.Revenue ?? 0
+            };
+        }).ToList();
     }
 
     private async Task<List<AdminOrderRowVM>> BuildOrderRows(IQueryable<HoaDon> query) => await query.Select(h => new AdminOrderRowVM { MaHd = h.MaHd, CustomerName = h.HoTen ?? h.MaKhNavigation.HoTen, CustomerId = h.MaKh, NgayDat = h.NgayDat, StatusName = h.MaTrangThaiNavigation.TenTrangThai, StatusId = h.MaTrangThai, PaymentMethod = h.CachThanhToan, Note = h.GhiChu, Total = h.ChiTietHds.Sum(ct => ct.SoLuong * ct.DonGia * (1 - ct.GiamGia)) + h.PhiVanChuyen }).ToListAsync();
@@ -412,13 +486,46 @@ public class AdminController : Controller
     private async Task ValidateProductModel(AdminProductFormVM model, int? currentId) { if (!await db.Loais.AnyAsync(x => x.MaLoai == model.MaLoai)) ModelState.AddModelError(nameof(model.MaLoai), "Danh mục không tồn tại."); if (string.IsNullOrWhiteSpace(model.MaNcc) || !await db.NhaCungCaps.AnyAsync(x => x.MaNcc == model.MaNcc)) ModelState.AddModelError(nameof(model.MaNcc), "Nhà cung cấp không tồn tại."); if (!string.IsNullOrWhiteSpace(model.TenAlias) && await db.HangHoas.AnyAsync(x => x.TenAlias == model.TenAlias.Trim() && (!currentId.HasValue || x.MaHh != currentId.Value))) ModelState.AddModelError(nameof(model.TenAlias), "SKU/Alias đã tồn tại."); }
     private void ApplyCategoryForm(Loai category, AdminCategoryFormVM model, IFormFile? hinhUpload) { category.TenLoai = (model.TenLoai ?? string.Empty).Trim(); category.TenLoaiAlias = string.IsNullOrWhiteSpace(model.TenLoaiAlias) ? null : model.TenLoaiAlias.Trim(); if (hinhUpload != null) { var fileName = MyUtil.UploadHinh(hinhUpload, "Loai"); if (!string.IsNullOrWhiteSpace(fileName)) category.Hinh = fileName; } else if (!string.IsNullOrWhiteSpace(model.Hinh)) category.Hinh = model.Hinh.Trim(); category.MoTa = AdminMetadataHelper.BuildCategory(new AdminMetadataHelper.CategoryMeta { Description = model.MoTa, ParentId = model.ParentCategoryId, SortOrder = model.SortOrder, IsVisible = model.IsVisible }); }
 
-    private static bool IsPendingStatus(int id) => id is 0;
-    private static bool IsShippingStatus(int id) => id is 2;
-    private static bool IsCompletedStatus(int id) => id is 1 or 3;
-    private static bool IsCancelledStatus(int id) => id < 0;
+    private static bool IsPendingStatus(int id) => OrderStatusHelper.IsPending(id);
+    private static bool IsShippingStatus(int id) => OrderStatusHelper.IsShipping(id);
+    private static bool IsCompletedStatus(int id) => OrderStatusHelper.IsCompleted(id);
+    private static bool IsCancelledStatus(int id) => OrderStatusHelper.IsCancelled(id);
     private async Task<int?> FindStatusId(string keyword) => (await db.TrangThais.FirstOrDefaultAsync(x => x.TenTrangThai.Contains(keyword)))?.MaTrangThai;
     private static string CompactNote(string? existing, string addition) { var value = string.IsNullOrWhiteSpace(existing) ? addition : $"{existing}; {addition}"; return value.Length <= 50 ? value : value[..50]; }
     private static string GetCustomerGroup(double totalSpent, int orderCount, int role) { if (role == MySetting.ADMIN_ROLE) return "Admin"; if (totalSpent >= 50_000_000 || orderCount >= 10) return "VIP"; if (totalSpent >= 10_000_000 || orderCount >= 3) return "Thân thiết"; return "Mới"; }
-    private static string GetPaymentStatus(string method, string status, string? note) { var data = $"{method} {status} {note}".ToLowerInvariant(); if (data.Contains("lỗi") || data.Contains("fail") || data.Contains("invalid") || data.Contains("hủy")) return "Giao dịch lỗi/hủy"; if (data.Contains("hoàn tiền") || data.Contains("refund")) return "Đã hoàn tiền"; if ((data.Contains("vnpay") || data.Contains("momo")) && (data.Contains("hoàn tất") || data.Contains("completed") || data.Contains("paid"))) return "Đã thanh toán online"; if (data.Contains("cod")) return status.Contains("hoàn", StringComparison.OrdinalIgnoreCase) ? "Đã thu COD" : "Chờ thu COD"; return "Chờ kiểm tra"; }
-    private static bool HasPaymentIssue(string method, string status, string? note) { var data = $"{method} {status} {note}".ToLowerInvariant(); return data.Contains("lỗi") || data.Contains("fail") || data.Contains("invalid") || data.Contains("hủy"); }
+    private static string GetPaymentStatus(string method, string status, int statusId, string? note)
+    {
+        var data = $"{method} {status} {note}".ToLowerInvariant();
+        var isOnline = data.Contains("vnpay") || data.Contains("momo");
+        var isCod = data.Contains("cod");
+        var hasRefund = data.Contains("hoàn tiền") || data.Contains("refund");
+        var hasIssue = data.Contains("lỗi") || data.Contains("fail") || data.Contains("invalid");
+
+        if (hasIssue || OrderStatusHelper.IsCancelled(statusId))
+        {
+            return "Giao dịch lỗi/hủy";
+        }
+        if (hasRefund)
+        {
+            return "Đã hoàn tiền";
+        }
+        if (isOnline)
+        {
+            return OrderStatusHelper.IsCompleted(statusId) ? "Đã thanh toán online" : "Chờ thanh toán online";
+        }
+        if (isCod)
+        {
+            return OrderStatusHelper.IsCompleted(statusId) ? "Đã thu COD" : "Chờ thu COD";
+        }
+        return OrderStatusHelper.IsCompleted(statusId) ? "Đã thanh toán" : "Chờ kiểm tra";
+    }
+
+    private static bool HasPaymentIssue(string method, string status, int statusId, string? note)
+    {
+        var data = $"{method} {status} {note}".ToLowerInvariant();
+        return data.Contains("lỗi")
+            || data.Contains("fail")
+            || data.Contains("invalid")
+            || OrderStatusHelper.IsCancelled(statusId);
+    }
 }
