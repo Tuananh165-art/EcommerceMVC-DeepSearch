@@ -47,6 +47,7 @@ namespace ECommerceMVC.Controllers
 					Hinh = x.p.Hinh ?? string.Empty,
 					MoTaNgan = x.p.MoTaDonVi ?? string.Empty,
 					TenLoai = x.p.MaLoaiNavigation.TenLoai,
+					SoLuongTon = x.p.SoLuongTon,
 					SoDanhGia = x.rating != null ? x.rating.SoDanhGia : 0,
 					DiemDanhGia = x.rating != null ? x.rating.DiemDanhGia : 0,
 					DiemDanhGiaTrungBinh = x.rating != null ? x.rating.DiemDanhGiaTrungBinh : 0

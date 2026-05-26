@@ -12,6 +12,9 @@ namespace ECommerceMVC.ViewModels
 		public double DonGia { get; set; }
 		public string MoTaNgan { get; set; } = string.Empty;
 		public string TenLoai { get; set; } = string.Empty;
+		public int SoLuongTon { get; set; }
+		public int SoLuongDaBan { get; set; }
+		public string TinhTrangKho => SoLuongTon <= 0 ? "Hết hàng" : SoLuongTon <= 5 ? $"Sắp hết - còn {SoLuongTon}" : $"Còn {SoLuongTon}";
 		public bool IsFavourite { get; set; }
 		public int DiemDanhGia { get; set; }
 		public double DiemDanhGiaTrungBinh { get; set; }

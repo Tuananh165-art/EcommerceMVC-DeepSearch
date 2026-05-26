@@ -48,12 +48,24 @@ public class StockService : IStockService
         return Math.Clamp(requestedQuantity, 1, product.SoLuongTon);
     }
 
-    public void DecrementStock(List<CartItem> cartItems)
+    public StockValidationResult DecrementStock(List<CartItem> cartItems)
     {
         foreach (var item in cartItems)
         {
-            var product = db.HangHoas.First(x => x.MaHh == item.MaHh);
+            var product = db.HangHoas.FirstOrDefault(x => x.MaHh == item.MaHh);
+            if (product == null)
+            {
+                return StockValidationResult.Fail($"Sản phẩm {item.TenHH} không còn tồn tại.");
+            }
+
+            if (item.SoLuong > product.SoLuongTon)
+            {
+                return StockValidationResult.Fail($"Sản phẩm {product.TenHh} chỉ còn {product.SoLuongTon} sản phẩm.");
+            }
+
             product.SoLuongTon = Math.Max(0, product.SoLuongTon - item.SoLuong);
         }
+
+        return StockValidationResult.Ok();
     }
 }

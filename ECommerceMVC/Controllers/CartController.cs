@@ -441,11 +441,12 @@ namespace ECommerceMVC.Controllers
 					ghiChuThanhToan = ghiChuThanhToan[..50];
 				}
 
+				var vietnamNow = AppTime.VietnamNow();
 				var hoaDon = new HoaDon
 				{
 					MaKh = kh.MaKh,
-					NgayDat = DateTime.Now,
-					NgayCan = DateTime.Now.AddDays(3),
+					NgayDat = vietnamNow,
+					NgayCan = vietnamNow.AddDays(3),
 					HoTen = model.HoTen,
 					DiaChi = model.DiaChi,
 					CachThanhToan = paymentMethodLabel,
@@ -468,6 +469,16 @@ namespace ECommerceMVC.Controllers
 				});
 
 				db.ChiTietHds.AddRange(chiTietItems);
+				db.SaveChanges();
+
+				var decrementResult = stockService.DecrementStock(gioHang);
+				if (!decrementResult.Success)
+				{
+					transaction.Rollback();
+					ModelState.AddModelError(string.Empty, decrementResult.Message);
+					ViewBag.Cart = gioHang;
+					return View(nameof(Checkout), model);
+				}
 				db.SaveChanges();
 
 				transaction.Commit();

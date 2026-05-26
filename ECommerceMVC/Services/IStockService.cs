@@ -6,7 +6,7 @@ public interface IStockService
 {
     StockValidationResult ValidateCart(List<CartItem> cartItems);
     int ClampQuantityToStock(int productId, int requestedQuantity);
-    void DecrementStock(List<CartItem> cartItems);
+    StockValidationResult DecrementStock(List<CartItem> cartItems);
 }
 
 public sealed record StockValidationResult(bool Success, string Message)

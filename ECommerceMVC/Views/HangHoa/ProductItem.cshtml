@@ -104,6 +104,7 @@
             <div class="catalog-luxe-content">
                 <div class="catalog-luxe-meta">
                     <span class="catalog-luxe-category">@category</span>
+                    <span class="catalog-luxe-category">@item.TinhTrangKho</span>
                 </div>
 
                 <h3 class="catalog-luxe-title">
@@ -136,9 +137,9 @@
                             @Html.AntiForgeryToken()
                             <input type="hidden" name="quantity" value="1" />
                             <input type="hidden" name="returnUrl" value="@Context.Request.Path@Context.Request.QueryString" />
-                            <button type="submit" class="catalog-luxe-cta" data-click-notify="Đang thêm vào giỏ hàng...">
+                            <button type="submit" class="catalog-luxe-cta" data-click-notify="Đang thêm vào giỏ hàng..." disabled="@(item.SoLuongTon <= 0 ? "disabled" : null)">
                                 <i data-icon="shopping-cart" data-size="14px"></i>
-                                Thêm vào giỏ
+                                @(item.SoLuongTon <= 0 ? "Hết hàng" : "Thêm vào giỏ")
                             </button>
                         </form>
                         <a asp-controller="HangHoa" asp-action="Detail" asp-route-id="@item.MaHh" class="catalog-luxe-cta catalog-luxe-cta-ghost">

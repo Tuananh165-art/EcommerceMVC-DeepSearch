@@ -149,13 +149,24 @@ namespace ECommerceMVC.Controllers
 					DonGia = p.DonGia ?? 0,
 					Hinh = p.Hinh ?? string.Empty,
 					MoTaNgan = p.MoTaDonVi ?? string.Empty,
-					TenLoai = p.MaLoaiNavigation.TenLoai
+					TenLoai = p.MaLoaiNavigation.TenLoai,
+					SoLuongTon = p.SoLuongTon
 				})
 				.ToList();
 
 			if (items.Count > 0)
 			{
 				var itemIds = items.Select(x => x.MaHh).ToList();
+				var soldLookup = db.ChiTietHds
+					.AsNoTracking()
+					.Where(x => itemIds.Contains(x.MaHh) && OrderStatusHelper.CompletedStatusIds.Contains(x.MaHdNavigation.MaTrangThai))
+					.GroupBy(x => x.MaHh)
+					.Select(g => new
+					{
+						MaHh = g.Key,
+						SoLuongDaBan = g.Sum(x => x.SoLuong)
+					})
+					.ToDictionary(x => x.MaHh, x => x.SoLuongDaBan);
 
 				var ratingLookup = db.ProductReviews
 					.AsNoTracking()
@@ -181,6 +192,11 @@ namespace ECommerceMVC.Controllers
 
 				foreach (var item in items)
 				{
+					if (soldLookup.TryGetValue(item.MaHh, out var sold))
+					{
+						item.SoLuongDaBan = sold;
+					}
+
 					if (ratingLookup.TryGetValue(item.MaHh, out var rating))
 					{
 						item.SoDanhGia = rating.SoDanhGia;
@@ -283,6 +299,7 @@ namespace ECommerceMVC.Controllers
 					Hinh = p.Hinh ?? string.Empty,
 					MoTaNgan = p.MoTaDonVi ?? string.Empty,
 					TenLoai = p.MaLoaiNavigation.TenLoai,
+					SoLuongTon = p.SoLuongTon,
 					IsFavourite = true
 				})
 				.ToList();
@@ -506,7 +523,8 @@ namespace ECommerceMVC.Controllers
 					DonGia = p.DonGia ?? 0,
 					Hinh = p.Hinh ?? string.Empty,
 					MoTaNgan = p.MoTaDonVi ?? string.Empty,
-					TenLoai = p.MaLoaiNavigation.TenLoai
+					TenLoai = p.MaLoaiNavigation.TenLoai,
+					SoLuongTon = p.SoLuongTon
 				})
 				.ToList();
 
